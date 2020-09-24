@@ -19,6 +19,7 @@ int main()
     printf("%e ms\n", count_time(fib3));
     return 1;
 }
+
 double count_time(unsigned long long (*f)(int))
 {
     clock_t start = clock(), end;
@@ -61,6 +62,7 @@ unsigned long long fib2(int n)
     }
     return list[n - 1];
 }
+
 unsigned long long fib3(int n)
 {
     unsigned long long list[2] = {1, 1};
