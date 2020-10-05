@@ -14,13 +14,12 @@
                 "-static-libgcc", // 静态链接
                 "-fcolor-diagnostics",
                 "--target=x86_64-w64-mingw", // 默认target为msvc，不加这一条就会找不到头文件
-                "-std=c++17" // C语言最新标准为c11，或根据自己的需要进行修改
+                "-std=c++17", // C语言最新标准为c11，或根据自己的需要进行修改
+                "-I",
+                "C:/mingw64/x86_64-w64-mingw32/include/**"
             ], // 编译命令参数
             "type": "shell",
-            "group": {
-                "kind": "build",
-                "isDefault": true // 设为false可做到一个tasks.json配置多个编译指令，需要自己修改本文件，我这里不多提
-            },
+            "group": "build",
             "presentation": {
                 "echo": true,
                 "reveal": "always", // 在“终端”中显示编译信息的策略，可以为always，silent，never。具体参见VSC的文档
@@ -28,6 +27,45 @@
                 "panel": "shared" // 不同的文件的编译信息共享一个终端面板
             }
             // "problemMatcher":"$gcc" // 如果你不使用clang，去掉前面的注释符，并在上一条之后加个逗号。照着我的教程做的不需要改（也可以把这行删去)
+        },
+        {
+            "type": "shell",
+            "label": "C/C++: clang.exe build active file",
+            "command": "F://program files//LLVM//bin//clang.exe",
+            "args": [
+                "-g",
+                "${file}",
+                "-o",
+                "${fileDirname}//${fileBasenameNoExtension}.exe"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": "build"
+        },
+        {
+            "type": "shell",
+            "label": "C/C++: gcc.exe build active file",
+            "command": "C://Strawberry//c//bin//gcc.exe",
+            "args": [
+                "-g",
+                "${file}",
+                "-o",
+                "${fileDirname}//${fileBasenameNoExtension}.exe"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ]
 }
