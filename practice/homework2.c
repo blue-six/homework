@@ -1,6 +1,15 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define LIST_SIZE 1024
+#define T int
+
+typedef struct lln
+{
+    T data;
+    struct lln *next;
+} LinkListNode;
 
 typedef struct Student
 {
@@ -94,4 +103,47 @@ void delete_s(stu_l *sl, int y)
             index++;
         }
     }
+}
+
+void sub(LinkListNode *a, LinkListNode *b)
+{
+    LinkListNode *p;
+    for (LinkListNode *i = b->next; i != NULL; i = i->next)
+    {
+        p = a;
+        for (LinkListNode *j = a->next; j != NULL; j = j->next)
+        {
+            if (j->data == i->data)
+            {
+                p->next = j->next;
+                free(j);
+                j = p;
+            }
+            else
+                p = j;
+        }
+    }
+}
+
+LinkListNode * and (LinkListNode * a, LinkListNode *b)
+{
+    LinkListNode *head, *p;
+    head = (LinkListNode *)malloc(sizeof(LinkListNode));
+    p = head;
+    head->next = NULL;
+    for (LinkListNode *i = a->next; i != NULL; i = i->next)
+    {
+        for (LinkListNode *j = b->next; j != NULL; j = j->next)
+        {
+            if (i->data == j->data)
+            {
+                p->next = (LinkListNode *)malloc(sizeof(LinkListNode));
+                p = p->next;
+                p->data = i->data;
+                p->next = NULL;
+                break;
+            }
+        }
+    }
+    return head;
 }
