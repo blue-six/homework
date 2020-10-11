@@ -19,6 +19,7 @@ void sort(int *p, char *q, int len); //排序
 T *make(int *p, char *q, int len);   //构建哈夫曼树
 void out(T *head, int len);          //打印输出
 void _out(T *head, stack *p);
+void freeNodes(T *root);
 
 int main()
 {
@@ -27,6 +28,7 @@ int main()
     sort(prob, sign, 8);
     T *head = make(prob, sign, 8);
     out(head, 8);
+    freeNodes(head);
     return 0;
 }
 
@@ -97,6 +99,7 @@ void out(T *head, int len)
 {
     stack a = {(char *)malloc(sizeof(char) * len), -1};
     _out(head, &a);
+    free(a.data);
 }
 
 void _out(T *head, stack *p)
@@ -112,4 +115,15 @@ void _out(T *head, stack *p)
     p->data[p->last] = '1';
     _out(head->right, p);
     (p->last)--;
+}
+
+void freeNodes(T *root)
+{
+    if (root == NULL)
+        return;
+    if (root->left != NULL)
+        freeNodes(root->left);
+    if (root->right != NULL)
+        freeNodes(root->right);
+    free(root);
 }

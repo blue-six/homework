@@ -11,6 +11,7 @@ typedef struct lln
 
 LLN *Creatlist(int *p);
 LLN *Adjmax(LLN *h);
+void freeNodes(LLN *head);
 
 int main()
 {
@@ -21,6 +22,7 @@ int main()
     LLN *head = Creatlist(sz1);
     LLN *answer = Adjmax(head);
     printf("%d", answer == NULL ? 0 : answer->data);
+    freeNodes(head);
 }
 
 LLN *Creatlist(int *p)
@@ -54,4 +56,14 @@ LLN *Adjmax(LLN *h)
         q = q->next;
     }
     return point;
+}
+
+void freeNodes(LLN *head)
+{
+    while (head != NULL)
+    {
+        LLN *p = head->next;
+        free(head);
+        head = p;
+    }
 }

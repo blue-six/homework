@@ -19,6 +19,7 @@ void move(char A, int n, char B);
 LLN *push(LLN *end, int n);
 LLN *pop(LLN *end);
 void out(LLN *head, char name);
+void freeNodes(LLN *head);
 
 int main()
 {
@@ -46,6 +47,9 @@ void start(int n)
         a_end = push(a_end, n--);
     }
     hanoi(m, 'a', 'b', 'c');
+    freeNodes(a_head);
+    freeNodes(b_head);
+    freeNodes(c_head);
 }
 
 void move(char A, int n, char B)
@@ -120,4 +124,14 @@ void out(LLN *head, char name)
         head = head->next;
     }
     printf("\n");
+}
+
+void freeNodes(LLN *head)
+{
+    while (head != NULL)
+    {
+        LLN *p = head->next;
+        free(head);
+        head = p;
+    }
 }
