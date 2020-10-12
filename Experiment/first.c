@@ -25,10 +25,10 @@ int main()
     {
         LLN *head = in_Creatlist();
         LLN *answer = Adjmax(head);
-        printf("%d", answer == NULL ? 0 : answer->data);
+        printf("%d\n", answer == NULL ? 0 : answer->data);
         freeNodes(head);
         printf("ÊÇ·ñ¼ÌÐø£¿(y/n):\n");
-        scanf("%c", &flg);
+        scanf("\n%c", &flg);
     }
 }
 
@@ -50,14 +50,14 @@ LLN *Adjmax(LLN *h)
 {
     LLN *p = h->next, *q = p == NULL ? NULL : p->next, *point = p;
     long max = LONG_MIN, n;
-    while (q != NULL && q->next != NULL)
+    while (q != NULL)
     {
         // printf("%d", 1);
-        n = p->data + q->data + q->next->data;
+        n = p->data + q->data;
         if (n > max)
         {
             max = n;
-            point = q;
+            point = p;
         }
         p = q;
         q = q->next;
