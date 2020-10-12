@@ -12,14 +12,15 @@ typedef struct lln
 LLN *Creatlist(int *p);
 LLN *Adjmax(LLN *h);
 void freeNodes(LLN *head);
+LLN *in_Creatlist();
 
 int main()
 {
     // int sz[] = {2, 6, 4, 7, 3, 0};
-    int sz1[] = {2, 6, 4, 7, 3, 9, 0};
+    // int sz1[] = {2, 6, 4, 7, 3, 9, 0};
     // int sz2[] = {2, 6, 4, 7, 3, 0};
     // int sz3[] = {2, 6, 4, 7, 3, 0};
-    LLN *head = Creatlist(sz1);
+    LLN *head = in_Creatlist();
     LLN *answer = Adjmax(head);
     printf("%d", answer == NULL ? 0 : answer->data);
     freeNodes(head);
@@ -66,4 +67,22 @@ void freeNodes(LLN *head)
         free(head);
         head = p;
     }
+}
+
+LLN *in_Creatlist()
+{
+    int n;
+    LLN *head = (LLN *)malloc(sizeof(LLN)), *p = head;
+    head->next = NULL;
+    printf("请输入数据，以空格分隔：\n");
+    scanf("%d", &n);
+    while (n != 0)
+    {
+        p->next = (LLN *)malloc(sizeof(LLN));
+        p = p->next;
+        p->data = n;
+        p->next = NULL;
+        scanf("%d", &n);
+    }
+    return head;
 }

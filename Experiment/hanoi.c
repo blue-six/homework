@@ -2,19 +2,19 @@
 #include <stdlib.h>
 
 typedef int ElemType;
-typedef struct lln //å•ä¸ªç›˜
+typedef struct lln //µ¥¸öÅÌ
 {
     ElemType data;
     struct lln *next;
     struct lln *prev;
 } LLN;
 
-LLN *a_head, *a_end; //æŸ±å­a
-LLN *b_head, *b_end; //æŸ±å­b
-LLN *c_head, *c_end; //æŸ±å­c
+LLN *a_head, *a_end; //Öù×Óa
+LLN *b_head, *b_end; //Öù×Ób
+LLN *c_head, *c_end; //Öù×Óc
 
 void start(int n);
-void hanoi(int n, char A, char B, char C); //hanoiå¡”ç®—æ³•
+void hanoi(int n, char A, char B, char C); //hanoiËşËã·¨
 void move(char A, int n, char B);
 LLN *push(LLN *end, int n);
 LLN *pop(LLN *end);
@@ -23,12 +23,17 @@ void freeNodes(LLN *head);
 
 int main()
 {
-    start(4);
+    int n;
+    printf("ÇëÊäÈëººÅµËş²ãÊı£º\n");
+    scanf("%d", &n);
+    start(n);
     return 0;
 }
 
 void start(int n)
 {
+    if (n <= 0)
+        return;
     a_head = (LLN *)malloc(sizeof(LLN));
     b_head = (LLN *)malloc(sizeof(LLN));
     c_head = (LLN *)malloc(sizeof(LLN));
@@ -84,15 +89,15 @@ void move(char A, int n, char B)
     out(c_head, 'c');
 }
 
-void hanoi(int n, char A, char B, char C) //hanoiå¡”ç®—æ³•
+void hanoi(int n, char A, char B, char C) //hanoiËşËã·¨
 {
     if (n == 1)
-        move(A, 1, C); //ç§»Aä¸Šçš„ä¸€ä¸ªç›˜åˆ°C
+        move(A, 1, C); //ÒÆAÉÏµÄÒ»¸öÅÌµ½C
     else
     {
-        hanoi(n - 1, A, C, B); //è§£å†³å­é—®é¢˜â‘ 
-        move(A, n, C);         //ç§»Aä¸Šçš„n å·ç›˜åˆ°C
-        hanoi(n - 1, B, A, C); //è§£å†³å­é—®é¢˜â‘¢
+        hanoi(n - 1, A, C, B); //½â¾ö×ÓÎÊÌâ¢Ù
+        move(A, n, C);         //ÒÆAÉÏµÄn ºÅÅÌµ½C
+        hanoi(n - 1, B, A, C); //½â¾ö×ÓÎÊÌâ¢Û
     }
 }
 
