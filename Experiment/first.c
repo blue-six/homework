@@ -20,10 +20,16 @@ int main()
     // int sz1[] = {2, 6, 4, 7, 3, 9, 0};
     // int sz2[] = {2, 6, 4, 7, 3, 0};
     // int sz3[] = {2, 6, 4, 7, 3, 0};
-    LLN *head = in_Creatlist();
-    LLN *answer = Adjmax(head);
-    printf("%d", answer == NULL ? 0 : answer->data);
-    freeNodes(head);
+    char flg = 'y';
+    while (flg == 'y')
+    {
+        LLN *head = in_Creatlist();
+        LLN *answer = Adjmax(head);
+        printf("%d", answer == NULL ? 0 : answer->data);
+        freeNodes(head);
+        printf("ÊÇ·ñ¼ÌÐø£¿(y/n):\n");
+        scanf("%c", &flg);
+    }
 }
 
 LLN *Creatlist(int *p)
