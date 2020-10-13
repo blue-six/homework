@@ -1,36 +1,49 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct tree //å“ˆå¤«æ›¼æ ‘èŠ‚ç‚¹
+typedef struct tree //¹ş·òÂüÊ÷½Úµã
 {
     int percent;
-    char sign;
+    char *sign;
     struct tree *left;
     struct tree *right;
 } T;
 
-typedef struct stack //å­—ç¬¦æ ˆ
+typedef struct stack //×Ö·ûÕ»
 {
     char *data;
     int last;
 } stack;
 
-void sort(int *p, char *q, int len); //æ’åº
-T *make(int *p, char *q, int len);   //æ„å»ºå“ˆå¤«æ›¼æ ‘
-void out(T *head, int len);          //æ‰“å°è¾“å‡º
+void sort(int *p, char **q, int len); //ÅÅĞò
+T *make(int *p, char **q, int len);   //¹¹½¨¹ş·òÂüÊ÷
+void out(T *head, int len);           //´òÓ¡Êä³ö
 void _out(T *head, stack *p);
+void freeNodes(T *root);
+void _in(int **p, char ***c, int *len);
 
 int main()
 {
-    char sign[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
-    int prob[] = {5, 9, 7, 8, 14, 6, 3, 11};
-    sort(prob, sign, 8);
-    T *head = make(prob, sign, 8);
+    // char sign[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
+    // int prob[] = {5, 9, 7, 8, 14, 6, 3, 11};
+    int **prob = (int **)malloc(sizeof(int **)), *len = (int *)malloc(sizeof(int *));
+    char ***sign = (char ***)malloc(sizeof(char ***));
+    _in(prob, sign, len);
+    sort(*prob, *sign, *len);
+    T *head = make(*prob, *sign, *len);
     out(head, 8);
+    freeNodes(head);
+    free(*prob);
+    free(prob);
+    for (int i = 0; i < *len; i++)
+    {
+        free((*sign)[i]);
+    }
+    free(sign);
     return 0;
 }
 
-void sort(int *p, char *q, int len)
+void sort(int *p, char **q, int len)
 {
     char flg = 1;
     for (int i = 0; i < len && flg; i++)
@@ -41,19 +54,20 @@ void sort(int *p, char *q, int len)
             if (p[i] < p[j])
             {
                 int s;
+                char *ss;
                 s = p[i];
                 p[i] = p[j];
                 p[j] = s;
-                s = q[i];
+                ss = q[i];
                 q[i] = q[j];
-                q[j] = s;
+                q[j] = ss;
                 flg = 1;
             }
         }
     }
 }
 
-T *make(int *p, char *q, int len)
+T *make(int *p, char **q, int len)
 {
     T *head, *left, *right;
     T *list[len];
@@ -95,8 +109,10 @@ T *make(int *p, char *q, int len)
 
 void out(T *head, int len)
 {
+    printf("\n");
     stack a = {(char *)malloc(sizeof(char) * len), -1};
     _out(head, &a);
+    free(a.data);
 }
 
 void _out(T *head, stack *p)
@@ -104,7 +120,7 @@ void _out(T *head, stack *p)
     if (head->sign != 0)
     {
         p->data[p->last + 1] = '\0';
-        printf("%c: %s\n", head->sign, p->data);
+        printf("%s: %s\n", head->sign, p->data);
         return;
     }
     p->data[++(p->last)] = '0';
@@ -112,4 +128,32 @@ void _out(T *head, stack *p)
     p->data[p->last] = '1';
     _out(head->right, p);
     (p->last)--;
+}
+
+void freeNodes(T *root)
+{
+    if (root == NULL)
+        return;
+    if (root->left != NULL)
+        freeNodes(root->left);
+    if (root->right != NULL)
+        freeNodes(root->right);
+    free(root);
+}
+
+void _in(int **p, char ***c, int *len)
+{
+    printf("ÇëÊäÈë×Ö·û¼¯³¤¶È£º\n");
+    scanf("%d", len);
+    *p = (int *)malloc((*len) * sizeof(int));
+    *c = (char **)malloc((*len) * sizeof(char));
+    printf("ÇëÊäÈë×Ö·û¼¯ÒÔ¼°³öÏÖÆµÂÊ\n¸ñÊ½£º×Ö·û ÆµÂÊ(int)\n");
+    for (int i = 0; i < *len; i++)
+    {
+        char *s = (char *)malloc(5 * sizeof(char));
+        int n;
+        scanf("%s %d", s, &n);
+        (*p)[i] = n;
+        (*c)[i] = s;
+    }
 }
