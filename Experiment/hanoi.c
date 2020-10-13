@@ -12,6 +12,7 @@ typedef struct lln //单个盘
 LLN *a_head, *a_end; //柱子a
 LLN *b_head, *b_end; //柱子b
 LLN *c_head, *c_end; //柱子c
+unsigned int numbers;
 
 void start(int n);
 void hanoi(int n, char A, char B, char C); //hanoi塔算法
@@ -24,7 +25,7 @@ void freeNodes(LLN *head);
 int main()
 {
     int n;
-    printf("请输入汉诺塔层数：\n");
+    printf("请输入汉诺塔层数：");
     scanf("%d", &n);
     start(n);
     return 0;
@@ -51,10 +52,14 @@ void start(int n)
     {
         a_end = push(a_end, n--);
     }
+    out(a_head, 'a');
+    out(b_head, 'b');
+    out(c_head, 'c');
     hanoi(m, 'a', 'b', 'c');
     freeNodes(a_head);
     freeNodes(b_head);
     freeNodes(c_head);
+    printf("共移动%u次", numbers);
 }
 
 void move(char A, int n, char B)
@@ -99,6 +104,7 @@ void hanoi(int n, char A, char B, char C) //hanoi塔算法
         move(A, n, C);         //移A上的n 号盘到C
         hanoi(n - 1, B, A, C); //解决子问题③
     }
+    numbers++;
 }
 
 LLN *push(LLN *end, int n)
