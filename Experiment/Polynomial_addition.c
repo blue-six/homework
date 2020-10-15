@@ -47,7 +47,10 @@ void add()
     int n = a.last > b.last ? a.last : b.last;
     for (int i = 0; i <= n; i++)
     {
-        result.data[i] = a.data[i] + b.data[i];
+        if (a.data[i] != 0 || b.data[i] != 0)
+        {
+            result.data[i] = a.data[i] + b.data[i];
+        }
     }
     result.last = n;
 }
