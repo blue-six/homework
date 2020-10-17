@@ -29,6 +29,11 @@ int main()
     int **prob = (int **)malloc(sizeof(int **)), *len = (int *)malloc(sizeof(int *));
     char ***sign = (char ***)malloc(sizeof(char ***));
     _in(prob, sign, len);
+    if (*len == 0)
+    {
+        printf("none");
+        return 0;
+    }
     sort(*prob, *sign, *len);
     T *head = make(*prob, *sign, *len);
     out(head, 8);
@@ -45,11 +50,9 @@ int main()
 
 void sort(int *p, char **q, int len)
 {
-    char flg = 1;
-    for (int i = 0; i < len && flg; i++)
+    for (int i = 0; i < len; i++)
     {
-        flg = 0;
-        for (int j = i; j < len; j++)
+        for (int j = i + 1; j < len; j++)
         {
             if (p[i] < p[j])
             {
@@ -61,7 +64,6 @@ void sort(int *p, char **q, int len)
                 ss = q[i];
                 q[i] = q[j];
                 q[j] = ss;
-                flg = 1;
             }
         }
     }
@@ -120,7 +122,7 @@ void _out(T *head, stack *p)
     if (head->sign != 0)
     {
         p->data[p->last + 1] = '\0';
-        printf("%s: %s\n", head->sign, p->data);
+        printf("%s : %s\n", head->sign, p->data);
         return;
     }
     p->data[++(p->last)] = '0';
@@ -145,12 +147,14 @@ void _in(int **p, char ***c, int *len)
 {
     printf("请输入字符集长度：\n");
     scanf("%d", len);
+    if (*len == 0)
+        return;
     *p = (int *)malloc((*len) * sizeof(int));
     *c = (char **)malloc((*len) * sizeof(char));
     printf("请输入字符集以及出现频率\n格式：字符 频率(int)\n");
     for (int i = 0; i < *len; i++)
     {
-        char *s = (char *)malloc(5 * sizeof(char));
+        char *s = (char *)malloc(10 * sizeof(char));
         int n;
         scanf("%s %d", s, &n);
         (*p)[i] = n;
