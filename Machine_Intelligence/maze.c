@@ -115,19 +115,6 @@ int main_2(void) //มฌะ๘ษ๚ณษนฬถจด๓ะกตฤหๆป๚รินฌฒขว๓ฝโฃฌอฌสฑีนสพภฉีนตฤฝฺตใาิผฐฯเนุส
     {
         createWall(); //ดดฝจรินฌอโวฝ
         createMaze(); //ดดฝจรินฌ
-        // printf("\nฯิสพรินฌฃบ\n");
-        // for (i = 0; i < row; i++)
-        // {
-        //     for (j = 0; j < col; j++)
-        //     {
-        //         if (maze[i][j] == 2)
-        //             printf("##");
-        //         else
-        //             printf("  ");
-        //     }
-        //     printf("\n");
-        // }
-
         if (visit_A_star(startI, startJ) == 0)
         {
             printf("\nรปำะีาตฝณ๖ฟฺฃก\n");
