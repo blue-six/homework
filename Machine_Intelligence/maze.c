@@ -4,13 +4,15 @@
 #include <string.h>
 #include <time.h>
 
+#define DEBUG 1
+
 typedef struct path
 {
     unsigned int x : 8, y : 8, slope : 8; //×ø±êÖµx£¬y£¬ÒÔ¼°Ä¿±êÆ«Àë³Ì¶Èslope
     unsigned int deep : 9, value : 9;     //Éî¶È£¬¹ÀÖµ
     unsigned int weight : 9;              //È¨Öµ
     unsigned int closed : 1;              //½Úµã¹Ø±Õ±êÖ¾
-    struct path *next, *parent;           //ÏÂÒ»¸ö½Úµã£¬¸¸½Úµã
+    struct path *next, *parent[3];        //ÏÂÒ»¸ö½Úµã£¬¸¸½Úµã
 } P;
 
 void createMaze();                         //´´½¨Ëæ»úÃÔ¹¬
@@ -26,6 +28,12 @@ P *new_p(int x, int y, int deep);          //´´½¨ÐÂ½Úµã
 int refresh(P *head, P *n);                //¸üÐÂ½ÚµãÔÚopen_listÖÐµÄÎ»ÖÃ
 int main_1(void);                          //Ô­Ê¼Ö÷º¯Êý
 int main_2(void);                          //Ä§¸ÄºóÓÃÓÚ²âÑéµÄÖ÷º¯Êý
+void extend(int x, int y, int deep, int row3, int cow3,
+            P *map[row3][cow3], P *open_list, P *p);               //½ÚµãÀ©Õ¹
+void find(P *head);                                                //ÃÔ¹¬¸³Öµ
+int get_good_deep(int x, int y);                                   //ÆúÓÃ
+void _refresh_deep(P *p, P *q);                                    //ÆúÓÃ
+int refresh_deep(P *head, int row3, int col3, P *map[row3][col3]); //ÆúÓÃ
 
 int startI = 1,
     startJ = 1; // Èë¿Ú
@@ -38,7 +46,7 @@ int col = 0;
 
 int main(void)
 {
-    main_1();
+    DEBUG ? main_2() : main_1();
 }
 
 int main_1(void)
@@ -108,8 +116,6 @@ int main_1(void)
 int main_2(void) //Á¬ÐøÉú³É¹Ì¶¨´óÐ¡µÄËæ»úÃÔ¹¬²¢Çó½â£¬Í¬Ê±Õ¹Ê¾À©Õ¹µÄ½ÚµãÒÔ¼°Ïà¹ØÊý¾ÝÍ³¼Æ¡£
 {
     int i, j;
-    row = 20;
-    col = 20;
 
     while (1)
     {
@@ -151,6 +157,8 @@ int main_2(void) //Á¬ÐøÉú³É¹Ì¶¨´óÐ¡µÄËæ»úÃÔ¹¬²¢Çó½â£¬Í¬Ê±Õ¹Ê¾À©Õ¹µÄ½ÚµãÒÔ¼°Ïà¹ØÊ
                         printf("k ");
                     else if (maze[i][j] == 5)
                         printf("w ");
+                    else if (maze[i][j] == 10)
+                        printf("--");
                     else
                         printf("  ");
                 }
@@ -242,120 +250,41 @@ int visit_aimless_dfs(int row2, int col2) //Ã¤Ä¿Éî¶ÈÓÅÏÈËÑË÷¡£
 
 int visit_A_star(int row2, int col2) //Í¨¹ýA*Ëã·¨Ñ°ÕÒÃÔ¹¬³öÂ·
 {
-    P *map[row][col];                        //´æ´¢½ÚµãÐÅÏ¢µÄÊý×é
-    memset(map, 0, row * col * sizeof(P *)); //½«Êý×éÄÚÈÝ³õÊ¼»¯Îª0
+    P *map[row][col]; //´æ´¢½ÚµãÐÅÏ¢µÄÊý×é
     char x, y, flg = 0;
-    int deep; //µ±Ç°±éÀúµ½µÄ½ÚµãµÄÏà¹ØÐÅÏ¢
+    int deep, weight = INT_MAX;              //µ±Ç°±éÀúµ½µÄ½ÚµãµÄÏà¹ØÐÅÏ¢
+    memset(map, 0, row * col * sizeof(P *)); //½«Êý×éÄÚÈÝ³õÊ¼»¯Îª0
     P *open_list = (P *)malloc(sizeof(P)), *p, *q;
     map[row2][col2] = p = open_list->next = (P *)malloc(sizeof(P));
-    p->x = row2, p->y = col2, p->deep = 0, p->next = p->parent = NULL;
+    p->x = row2, p->y = col2, p->deep = 0, p->next = NULL, memset(p->parent, 0, 3 * sizeof(P *));
     p->slope = (p->y / p->x) - abs(col - col2) / abs(row - row2);
     p->value = get_value(p->x, p->y), p->weight = p->deep + p->value; //³õÊ¼»¯open_list
     while (open_list->next != NULL)                                   //Í¨¹ýÅÐ¶Ïopen_listÊÇ·ñÎª¿ÕÀ´Ìø³öÑ­»·
     {
-        p = get(open_list);                                //´Óopen_listÖÐÒÆ³öÈ¨Öµ×îÐ¡µÄ½Úµã
-        p->closed = 1;                                     //½«´Ë½Úµã±ê¼ÇÎª¹Ø±Õ
-        if (p->x == row - 2 && p->y == col - 2 && (++flg)) //Èç¹ûÕÒµ½³ö¿Ú¼´½«flgÖÃ1²¢Ìø³öÑ­»·
-            break;
+        p = get(open_list);                 //´Óopen_listÖÐÒÆ³öÈ¨Öµ×îÐ¡µÄ½Úµã
         x = p->x, y = p->y, deep = p->deep; //µÃµ½½ÚµãÏà¹ØÐÅÏ¢
+        // refresh_deep(p, row, col, map);
+        if (p->weight > weight) //(p->value + get_good_deep(x, y))
+            break;
+        p->closed = 1;                                      //½«´Ë½Úµã±ê¼ÇÎª¹Ø±Õ
+        if ((x == row - 2) && (y == col - 2) && flg++ == 0) //Èç¹ûÕÒµ½³ö¿Ú¼´½«flgÖÃ1²¢Ìø³öÑ­»·
+            weight = p->weight, q = p,
+            DEBUG && printf("weight=%d\n", weight);
         /* 
         ½øÈëÀ©Õ¹½×¶Î
         ÒÀ´ÎÏòÏÂ¡¢ÓÒ¡¢ÉÏ¡¢×ó±éÀú½Úµã²¢¼ÓÈëopen_listµ±ÖÐ£¬
         Í¬Ê±½«¶ÔÓ¦µÄ½Úµã¼ÇÂ¼µ½´æ´¢½ÚµãÐÅÏ¢Êý×éµÄ¶ÔÓ¦Î»ÖÃµ±ÖÐ¡£
          */
-        if (maze[x + 1][(short)y] != 2) //Èç¹û´Ë½Úµã²»ÊÇÇ½£¬¼´¿É½øÐÐÌí¼Ó²Ù×÷
-        {
-            if (map[x + 1][(short)y] == 0) //Èç¹ûµ±Ç°½ÚµãµÄÐÅÏ¢Î´¼ÇÂ¼µ½Êý×éÖÐ£¬¾Í´´½¨ÐÂ½Úµã²¢¼ÇÂ¼
-            {
-                q = map[x + 1][(short)y] = new_p(x + 1, y, deep + 1);
-                add(open_list, q);                   //½«½Úµã¼ÓÈëµ½open_listµ±ÖÐ
-                q->parent = map[(short)x][(short)y]; //½«´Ë½ÚµãµÄ¸¸½ÚµãÉèÖÃÎªµ±Ç°½Úµã
-            }
-            else //Èç¹û½ÚµãÒÑ´æÔÚ
-            {
-                q = map[x + 1][(short)y]; //È¡µÃ½ÚµãÐÅÏ¢
-                if (q->deep > deep + 1)   //Èç¹ûµ±Ç°Â·¾¶±ÈÒÑÓÐÂ·¾¶¶Ì£¬½øÐÐ½Úµã¸üÐÂ
-                {
-                    //printf("start  %d   ", q->deep);
-                    //printf("end  %d\n", deep + 1);
-                    q->deep = deep + 1;                      //¸üÐÂ½ÚµãÉî¶È
-                    q->weight = q->deep + q->value;          //¸üÐÂ½ÚµãÈ¨Öµ
-                    q->closed == 0 && refresh(open_list, q); //Èç¹û½ÚµãÎ´¹Ø±Õ£¬¾Í½øÐÐ¸üÐÂ´Ë½ÚµãÔÚopen_listÖÐµÄÎ»ÖÃ
-                    q->parent = map[(short)x][(short)y];     //½«´Ë½ÚµãµÄ¸¸½ÚµãÉèÖÃÎªµ±Ç°½Úµã
-                }
-            }
-        }
-        if (maze[(short)x][y + 1] != 2) //Âß¼­ÓëÉÏÃæÏàÍ¬
-        {
-            if (map[(short)x][y + 1] == 0)
-            {
-                q = map[(short)x][y + 1] = new_p(x, y + 1, deep + 1);
-                add(open_list, q);
-                q->parent = map[(short)x][(short)y];
-            }
-            else
-            {
-                q = map[(short)x][y + 1];
-                if (q->deep > deep + 1)
-                {
-                    //printf("start  %d   ", q->deep);
-                    //printf("end  %d\n", deep + 1);
-                    q->deep = deep + 1;
-                    q->weight = q->deep + q->value;
-                    q->closed == 0 && refresh(open_list, q);
-                    q->parent = map[(short)x][(short)y];
-                }
-            }
-        }
-        if (maze[x - 1][(short)y] != 2) //Âß¼­ÓëÉÏÃæÏàÍ¬
-        {
-            if (map[x - 1][(short)y] == 0)
-            {
-                q = map[x - 1][(short)y] = new_p(x - 1, y, deep + 1);
-                add(open_list, q);
-                q->parent = map[(short)x][(short)y];
-            }
-            else
-            {
-                q = map[x - 1][(short)y];
-                if (q->deep > deep + 1)
-                {
-                    //printf("start  %d   ", q->deep);
-                    //printf("end  %d\n", deep + 1);
-                    q->deep = deep + 1;
-                    q->weight = q->deep + q->value;
-                    q->closed == 0 && refresh(open_list, q);
-                    q->parent = map[(short)x][(short)y];
-                }
-            }
-        }
-        if (maze[(short)x][y - 1] != 2) //Âß¼­ÓëÉÏÃæÏàÍ¬
-        {
-            if (map[(short)x][y - 1] == 0)
-            {
-                q = map[(short)x][y - 1] = new_p(x, y - 1, deep + 1);
-                add(open_list, q);
-                q->parent = map[(short)x][(short)y];
-            }
-            else
-            {
-                q = map[(short)x][y - 1];
-                if (q->deep > deep + 1)
-                {
-                    //printf("start  %d   ", q->deep);
-                    //printf("end  %d\n", deep + 1);
-                    q->deep = deep + 1;
-                    q->weight = q->deep + q->value;
-                    q->closed == 0 && refresh(open_list, q);
-                    q->parent = map[(short)x][(short)y];
-                }
-            }
-        }
+        extend(x + 1, y, deep, row, col, map, open_list, p);
+        extend(x, y + 1, deep, row, col, map, open_list, p);
+        extend(x - 1, y, deep, row, col, map, open_list, p);
+        extend(x, y - 1, deep, row, col, map, open_list, p);
     }
     if (flg) //Èç¹ûflgÎª1£¬ËµÃ÷ÕÒµ½³ö¿Ú
     {
-        for (q = p; q != NULL; q = q->parent) //ÔÚÃÔ¹¬Í¼ÖÐ¼ÇÂ¼ÕÒµ½µÄÂ·¾¶
+        for (p = q; q != NULL; q = q->parent[0]) //ÔÚÃÔ¹¬Í¼ÖÐ¼ÇÂ¼ÕÒµ½µÄÂ·¾¶
             maze[q->x][q->y] = 1;
+        find(p);
     }
     int n = 0, m = 0;             //Í³¼ÆÊý¾ÝÓÃ±äÁ¿
     for (int i = 0; i < row; i++) //¶ÔÕû¸ö½ÚµãÐÅÏ¢´æ´¢Êý×é½øÐÐ±éÀú
@@ -436,6 +365,38 @@ int refresh(P *head, P *n) //¶Ôµ¥Ò»½ÚµãÖØÐÂÅÅÐò
     return 1;
 }
 
+int refresh_deep(P *head, int row3, int col3, P *map[row3][col3])
+{
+    int x = head->x, y = head->y;
+    _refresh_deep(map[x + 1][y], head);
+    _refresh_deep(map[x][y + 1], head);
+    _refresh_deep(map[x - 1][y], head);
+    _refresh_deep(map[x][y - 1], head);
+    return 1;
+}
+
+void _refresh_deep(P *p, P *q)
+{
+    if (p != 0 && p->deep < q->deep)
+    {
+        if (q->parent[0] != p && q->parent[1] != p && q->parent[2] != p)
+        {
+            if (q->parent[1] == 0)
+                q->parent[1] = p, q->deep = p->deep + 1, q->weight = q->value + q->deep;
+            else if (q->parent[2] == 0)
+                q->parent[2] = p, q->deep = p->deep + 1, q->weight = q->value + q->deep;
+            else
+            {
+                printf("no space\nnow_x=%3d  now_y=%3d\n", q->x, q->y);
+                printf("aim_x=%3d  aim_y=%3d\n", p->x, p->y);
+                printf("0_x=%3d  0_y=%3d\n", q->parent[0]->x, q->parent[0]->y);
+                printf("1_x=%3d  1_y=%3d\n", q->parent[1]->x, q->parent[1]->y);
+                printf("2_x=%3d  2_y=%3d\n", q->parent[2]->x, q->parent[2]->y);
+            }
+        }
+    }
+}
+
 P *get(P *head) //µÃµ½open_listÖÐµÄ×îÐ¡½Úµã²¢É¾³ý
 {
     P *p = head->next;
@@ -455,14 +416,78 @@ P *new_p(int x, int y, int deep) //´´½¨ÐÂ½Úµã
     p->deep = deep, p->closed = 0;
     p->x = x, p->y = y;
     n = row - 2 - x;
-    p->slope = abs((col - 1 / row - 1) - abs(n == 0 ? INT_MAX : (col - 2 - y) / n));
+    p->slope = abs((col - 2 / row - 2) - abs(n == 0 ? INT_MAX : (col - 2 - y) / n));
     p->value = get_value(p->x, p->y);
-    p->weight = p->deep + p->value;
-    p->next = p->parent = NULL; //½øÐÐÏà¹Ø³õÊ¼»¯
+    p->weight = p->deep + p->value, p->next = NULL;
+    memset(p->parent, 0, 3 * sizeof(P *)); //½øÐÐÏà¹Ø³õÊ¼»¯
     return p;
 }
 
 int get_value(int x, int y) //»ñµÃ´«ÈëÎ»ÖÃµÄÂ·¾¶¹ÀÖµ
 {
     return abs(row - 2 - x) + abs(col - 2 - y);
+}
+
+int get_good_deep(int x, int y) //»ñµÃ¿ÉÄÜµÄ×îÓÅ²½Êý
+{
+    return abs(x - 1) + abs(y - 1);
+}
+
+void extend(int x, int y, int deep, int row3, int col3, P *map[row3][col3], P *open_list, P *p)
+{
+    P *q;
+    if (maze[x][y] != 2) //Èç¹û´Ë½Úµã²»ÊÇÇ½£¬¼´¿É½øÐÐÌí¼Ó²Ù×÷
+    {
+        if (map[x][y] == 0) //Èç¹ûµ±Ç°½ÚµãµÄÐÅÏ¢Î´¼ÇÂ¼µ½Êý×éÖÐ£¬¾Í´´½¨ÐÂ½Úµã²¢¼ÇÂ¼
+        {
+            q = map[x][y] = new_p(x, y, deep + 1);
+            q->parent[0] = p;  //½«´Ë½ÚµãµÄ¸¸½ÚµãÉèÖÃÎªµ±Ç°½Úµã
+            add(open_list, q); //½«½Úµã¼ÓÈëµ½open_listµ±ÖÐ
+        }
+        else //Èç¹û½ÚµãÒÑ´æÔÚ
+        {
+            q = map[x][y];          //È¡µÃ½ÚµãÐÅÏ¢
+            if (q->deep > deep + 1) //Èç¹ûµ±Ç°Â·¾¶±ÈÒÑÓÐÂ·¾¶¶Ì£¬½øÐÐ½Úµã¸üÐÂ
+            {
+                DEBUG &&printf("start  %3d   ", q->deep);
+                DEBUG &&printf("end  %3d   close  %3d\n", deep + 1, q->closed);
+                q->deep = deep + 1;             //¸üÐÂ½ÚµãÉî¶È
+                q->weight = q->deep + q->value; //¸üÐÂ½ÚµãÈ¨Öµ
+                q->parent[0] = p;               //½«´Ë½ÚµãµÄ¸¸½ÚµãÉèÖÃÎªµ±Ç°½Úµã
+                q->parent[1] = q->parent[2] = 0;
+                q->closed == 0 && refresh(open_list, q); //Èç¹û½ÚµãÎ´¹Ø±Õ£¬¾Í½øÐÐ¸üÐÂ´Ë½ÚµãÔÚopen_listÖÐµÄÎ»ÖÃ
+            }
+            else if (q->deep == deep + 1 && q->parent[0] != p) //Èç¹ûµ±Ç°½Úµã¿ÉÒÔÊÇ´Ë½ÚµãµÄ¸¸½Úµã£¬Ôò¼ÇÂ¼
+            {
+                if (q->parent[1] == 0 || p == q->parent[1])
+                    q->parent[1] = p;
+                else if (q->parent[2] == 0 || q->parent[2] == p)
+                    q->parent[2] = p;
+                else
+                {
+                    printf("no space\nnow_x=%3d  now_y=%3d\n", q->x, q->y);
+                    printf("aim_x=%3d  aim_y=%3d\n", p->x, p->y);
+                    printf("0_x=%3d  0_y=%3d\n", q->parent[0]->x, q->parent[0]->y);
+                    printf("1_x=%3d  1_y=%3d\n", q->parent[1]->x, q->parent[1]->y);
+                    printf("2_x=%3d  2_y=%3d\n", q->parent[2]->x, q->parent[2]->y);
+                }
+            }
+        }
+    }
+}
+
+void find(P *head) //µÝ¹é¼ÇÂ¼ÆäËûÂ·¾¶
+{
+    int n = head == 0 ? 0 : maze[head->x][head->y];
+    if (head == 0 || (n != 0 && n != 1))
+        return;
+    if (n == 1)
+        maze[head->x][head->y] = 15;
+    else
+        maze[head->x][head->y] = 10;
+    find(head->parent[0]);
+    find(head->parent[1]);
+    find(head->parent[2]);
+    if (n == 1)
+        maze[head->x][head->y] = 1;
 }
