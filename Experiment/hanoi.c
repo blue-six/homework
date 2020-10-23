@@ -25,7 +25,7 @@ void freeNodes(LLN *head);
 int main()
 {
     int n;
-    printf("ÇëÊäÈëººÅµËş²ãÊı£º");
+    printf("ÇëÊäÈëººÅµËş²ãÊı£º\n");
     scanf("%d", &n);
     start(n);
     return 0;
