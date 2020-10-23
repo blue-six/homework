@@ -10,16 +10,19 @@ typedef struct list
 
 list a = {{0}, 0}, b = {{0}, 0}, result = {{0}, 0}, *_list[] = {&a, &b};
 
-void make(int *arr, int size, char name); //濉叆绯绘暟
-void add();                               //鐩稿姞
-void out();                               //杈撳嚭
+void make(int *arr, int size, char name); //填入系数
+void add();                               //相加
+void out();                               //输出
+void in_make(char name);                  //获取输入
 
 int main()
 {
-    int a_[] = {0}; //澶氶」寮廰鐨勶紙骞傛锛岀郴鏁帮紝骞傛锛岀郴鏁奥仿仿凤級
-    int b_[] = {0}; //鍚屼笂
-    make(a_, sizeof(a_) / sizeof(a_[0]), 'a');
-    make(b_, sizeof(b_) / sizeof(b_[0]), 'b');
+    // int a_[] = {0}; //多项式a的（幂次，系数，幂次，系数···）
+    // int b_[] = {0}; //同上
+    // make(a_, sizeof(a_) / sizeof(a_[0]), 'a');
+    // make(b_, sizeof(b_) / sizeof(b_[0]), 'b');
+    in_make('a');
+    in_make('b');
     add();
     out();
     // system("pause");
@@ -44,7 +47,10 @@ void add()
     int n = a.last > b.last ? a.last : b.last;
     for (int i = 0; i <= n; i++)
     {
-        result.data[i] = a.data[i] + b.data[i];
+        if (a.data[i] != 0 || b.data[i] != 0)
+        {
+            result.data[i] = a.data[i] + b.data[i];
+        }
     }
     result.last = n;
 }
@@ -65,5 +71,19 @@ void out()
     else
     {
         printf("none\n");
+    }
+}
+
+void in_make(char name)
+{
+    list *p = _list[name - 'a'];
+    int n, x;
+    printf("请输入多项式，幂次输入-1结束\n格式：系数 幂次\n");
+    scanf("%d %d", &x, &n);
+    while (n != -1)
+    {
+        p->data[n] = x;
+        p->last = p->last > n ? p->last : n;
+        scanf("%d %d", &x, &n);
     }
 }

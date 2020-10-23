@@ -11,16 +11,25 @@ typedef struct lln
 
 LLN *Creatlist(int *p);
 LLN *Adjmax(LLN *h);
+void freeNodes(LLN *head);
+LLN *in_Creatlist();
 
 int main()
 {
     // int sz[] = {2, 6, 4, 7, 3, 0};
-    int sz1[] = {2, 6, 4, 7, 3, 9, 0};
+    // int sz1[] = {2, 6, 4, 7, 3, 9, 0};
     // int sz2[] = {2, 6, 4, 7, 3, 0};
     // int sz3[] = {2, 6, 4, 7, 3, 0};
-    LLN *head = Creatlist(sz1);
-    LLN *answer = Adjmax(head);
-    printf("%d", answer == NULL ? 0 : answer->data);
+    char flg = 'y';
+    while (flg == 'y')
+    {
+        LLN *head = in_Creatlist();
+        LLN *answer = Adjmax(head);
+        printf("%d\n", answer == NULL ? 0 : answer->data);
+        freeNodes(head);
+        printf("是否继续？(y/n):\n");
+        scanf("\n%c", &flg);
+    }
 }
 
 LLN *Creatlist(int *p)
@@ -41,17 +50,45 @@ LLN *Adjmax(LLN *h)
 {
     LLN *p = h->next, *q = p == NULL ? NULL : p->next, *point = p;
     long max = LONG_MIN, n;
-    while (q != NULL && q->next != NULL)
+    while (q != NULL)
     {
         // printf("%d", 1);
-        n = p->data + q->data + q->next->data;
+        n = p->data + q->data;
         if (n > max)
         {
             max = n;
-            point = q;
+            point = p;
         }
         p = q;
         q = q->next;
     }
     return point;
+}
+
+void freeNodes(LLN *head)
+{
+    while (head != NULL)
+    {
+        LLN *p = head->next;
+        free(head);
+        head = p;
+    }
+}
+
+LLN *in_Creatlist()
+{
+    int n;
+    LLN *head = (LLN *)malloc(sizeof(LLN)), *p = head;
+    head->next = NULL;
+    printf("请输入数据，以空格分隔：\n");
+    scanf("%d", &n);
+    while (n != 0)
+    {
+        p->next = (LLN *)malloc(sizeof(LLN));
+        p = p->next;
+        p->data = n;
+        p->next = NULL;
+        scanf("%d", &n);
+    }
+    return head;
 }
