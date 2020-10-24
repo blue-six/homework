@@ -11,17 +11,30 @@ typedef struct location
     unsigned int x : 8, y : 8;
 } Loc;
 
+enum score
+{
+    ONE = 10,
+    TWO = 100,
+    THREE = 1000,
+    FOUR = 100000,
+    FIVE = 10000000,
+    BLOCKED_ONE = 1,
+    BLOCKED_TWO = 10,
+    BLOCKED_THREE = 100,
+    BLOCKED_FOUR = 10000
+};
 char chessboard[15][15] = {0};
 
-void show_chessboard();                      //显示棋局
-void put(Loc *l, char name);                 //落子
-void input(Loc *l);                          //获得玩家输入
-Loc *AI();                                   //AI计算落子方位
-int win(Loc *l);                             //判断是否有一方获胜
-int has_neighbors(Loc *l, int n, int count); //判断周围落子情况
-int evaluate(char name);                     //评估棋局
-int _evaluate(Loc *l, char name);            //估算单个位置的价值
-char h_start();                              //棋局开始
+void show_chessboard();                           //显示棋局
+void put(Loc *l, char name);                      //落子
+void input(Loc *l);                               //获得玩家输入
+Loc *AI();                                        //AI计算落子方位
+int win(Loc *l);                                  //判断是否有一方获胜
+int has_neighbors(Loc *l, int n, int count);      //判断周围落子情况
+int evaluate(char name);                          //评估棋局
+int _evaluate(Loc *l, char name);                 //估算单个位置的价值
+int count_score(int count, int empty, int block); //返回价值
+char h_start();                                   //棋局开始
 
 int main()
 {
@@ -202,4 +215,227 @@ int has_neighbors(Loc *l, int n, int count)
 Loc *AI()
 {
     static Loc l = {0, 0};
+    return &l;
+}
+
+//估算单个位置的价值
+int _evaluate(Loc *l, char name)
+{
+}
+
+//返回价值
+int count_score(int count, int empty, int block)
+{
+
+    //没有空位
+    if (empty <= 0)
+    {
+        if (count >= 5)
+            return FIVE;
+        if (block == 0)
+        {
+            switch (count)
+            {
+            case 1:
+                return ONE;
+            case 2:
+                return TWO;
+            case 3:
+                return THREE;
+            case 4:
+                return FOUR;
+            }
+        }
+
+        if (block == 1)
+        {
+            switch (count)
+            {
+            case 1:
+                return BLOCKED_ONE;
+            case 2:
+                return BLOCKED_TWO;
+            case 3:
+                return BLOCKED_THREE;
+            case 4:
+                return BLOCKED_FOUR;
+            }
+        }
+    }
+    else if (empty == 1 || empty == count - 1)
+    {
+        //第1个是空位
+        if (count >= 6)
+        {
+            return FIVE;
+        }
+        if (block == 0)
+        {
+            switch (count)
+            {
+            case 2:
+                return TWO / 2;
+            case 3:
+                return THREE;
+            case 4:
+                return BLOCKED_FOUR;
+            case 5:
+                return FOUR;
+            }
+        }
+
+        if (block == 1)
+        {
+            switch (count)
+            {
+            case 2:
+                return BLOCKED_TWO;
+            case 3:
+                return BLOCKED_THREE;
+            case 4:
+                return BLOCKED_FOUR;
+            case 5:
+                return BLOCKED_FOUR;
+            }
+        }
+    }
+    else if (empty == 2 || empty == count - 2)
+    {
+        //第二个是空位
+        if (count >= 7)
+        {
+            return FIVE;
+        }
+        if (block == 0)
+        {
+            switch (count)
+            {
+            case 3:
+                return THREE;
+            case 4:
+            case 5:
+                return BLOCKED_FOUR;
+            case 6:
+                return FOUR;
+            }
+        }
+
+        if (block == 1)
+        {
+            switch (count)
+            {
+            case 3:
+                return BLOCKED_THREE;
+            case 4:
+                return BLOCKED_FOUR;
+            case 5:
+                return BLOCKED_FOUR;
+            case 6:
+                return FOUR;
+            }
+        }
+
+        if (block == 2)
+        {
+            switch (count)
+            {
+            case 4:
+            case 5:
+            case 6:
+                return BLOCKED_FOUR;
+            }
+        }
+    }
+    else if (empty == 3 || empty == count - 3)
+    {
+        if (count >= 8)
+        {
+            return FIVE;
+        }
+        if (block == 0)
+        {
+            switch (count)
+            {
+            case 4:
+            case 5:
+                return THREE;
+            case 6:
+                return BLOCKED_FOUR;
+            case 7:
+                return FOUR;
+            }
+        }
+
+        if (block == 1)
+        {
+            switch (count)
+            {
+            case 4:
+            case 5:
+            case 6:
+                return BLOCKED_FOUR;
+            case 7:
+                return FOUR;
+            }
+        }
+
+        if (block == 2)
+        {
+            switch (count)
+            {
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+                return BLOCKED_FOUR;
+            }
+        }
+    }
+    else if (empty == 4 || empty == count - 4)
+    {
+        if (count >= 9)
+        {
+            return FIVE;
+        }
+        if (block == 0)
+        {
+            switch (count)
+            {
+            case 5:
+            case 6:
+            case 7:
+            case 8:
+                return FOUR;
+            }
+        }
+
+        if (block == 1)
+        {
+            switch (count)
+            {
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+                return BLOCKED_FOUR;
+            case 8:
+                return FOUR;
+            }
+        }
+
+        if (block == 2)
+        {
+            switch (count)
+            {
+            case 5:
+            case 6:
+            case 7:
+            case 8:
+                return BLOCKED_FOUR;
+            }
+        }
+    }
+    else if (empty == 5 || empty == count - 5)
+        return FIVE;
+    return 0;
 }
