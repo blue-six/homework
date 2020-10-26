@@ -1,3 +1,10 @@
+/* 
+作者：wpy
+
+算法思路来自：https://github.com/lihongxun945/myblog/issues/11
+ai部分代码借鉴自：https://github.com/lihongxun945/gobang
+棋局评分借鉴自：https://github.com/lihongxun945/gobang
+ */
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,11 +12,20 @@
 
 #define DEBUG 1
 #define CS chessboard
+#define MAX FIVE * 10
+#define MIX -FIVE * 10
 
 typedef struct location
 {
     unsigned int x : 8, y : 8;
 } Loc;
+
+typedef struct points
+{
+    unsigned int x : 8, y : 8;
+    int score;
+    struct points *next;
+} P;
 
 enum score
 {
@@ -23,18 +39,24 @@ enum score
     BLOCKED_THREE = 100,
     BLOCKED_FOUR = 10000
 };
-char chessboard[15][15] = {0};
 
-void show_chessboard();                           //显示棋局
-void put(Loc *l, char name);                      //落子
-void input(Loc *l);                               //获得玩家输入
-Loc *AI();                                        //AI计算落子方位
-int win(Loc *l);                                  //判断是否有一方获胜
-int has_neighbors(Loc *l, int n, int count);      //判断周围落子情况
-int evaluate(char name);                          //评估棋局
-int _evaluate(Loc *l, char name);                 //估算单个位置的价值
-int count_score(int count, int empty, int block); //返回价值
-char h_start();                                   //棋局开始
+char chessboard[15][15] = {0};
+int hum_score[15][15] = {0}, com_score[15][15] = {0};
+
+void show_chessboard();                                       //显示棋局
+void put(Loc *l, char name);                                  //落子
+void input(Loc *l);                                           //获得玩家输入
+Loc *AI();                                                    //AI计算落子方位
+int win(Loc *l);                                              //判断是否有一方获胜
+int has_neighbors(Loc *l, int n, int count);                  //判断周围落子情况
+int evaluate(char name);                                      //评估棋局
+int _evaluate(Loc *l, char name, int dir);                    //估算单个位置的价值
+int count_score(int count, int empty, int block);             //返回价值
+char h_start();                                               //棋局开始
+int ab_cut(int deep, Loc *l, int alpha, int beta, char name); //剪枝
+P *generate(char name);                                       //生成落子位置
+void remove_(Loc *l);                                         //移除棋子
+int fix_score(int score);                                     //完善打分
 
 int main()
 {
@@ -47,11 +69,13 @@ int main()
         input(&l), put(&l, 'h');
         if (win(&l))
         {
+            show_chessboard();
             printf("玩家获胜!\n");
             break;
         }
         if (win(AI()))
         {
+            show_chessboard();
             printf("计算机获胜!\n");
             break;
         }
@@ -120,6 +144,13 @@ void put(Loc *l, char name)
 {
     DEBUG &&printf("落子位置为:x =%3d  y =%3d\n", l->x, l->y);
     CS[l->x][l->y] = name;
+}
+
+//移除棋子
+void remove_(Loc *l)
+{
+    DEBUG &&printf("移除棋子位置为:x =%3d  y =%3d\n", l->x, l->y);
+    CS[l->x][l->y] = 0;
 }
 
 //判断是否有一方获胜
@@ -218,9 +249,237 @@ Loc *AI()
     return &l;
 }
 
-//估算单个位置的价值
-int _evaluate(Loc *l, char name)
+//评估棋局
+int evaluate(char name)
 {
+    int com_max = 0, hum_max = 0;
+    for (int i = 0; i < 15; i++)
+    {
+        for (int j = 0; j < 15; j++)
+        {
+            if (CS[i][j] == 'c')
+                com_max += fix_score(com_score[i][j]);
+            else if (CS[i][j] == 'h')
+                hum_max += fix_score(hum_score[i][j]);
+        }
+    }
+    return name == 'c' ? com_max - hum_max : hum_max - com_max;
+}
+
+//估算单个位置的价值
+int _evaluate(Loc *l, const char name, const int dir)
+{
+    int value = 0, count = 1, block = 0, empty = -1;
+    const int x = l->x, y = l->y;
+    char now;
+    if (dir == -1 || dir == 0)
+    {
+        for (int i = y + 1;; i++)
+        {
+            if (i > 14)
+            {
+                block++;
+                break;
+            }
+            now = CS[x][i];
+            if (now == name)
+                count++;
+            else if (now == 0)
+            {
+                if (empty == -1 && i < 14 && CS[x][i + 1] == name)
+                    empty = count;
+                else
+                    break;
+            }
+            else
+            {
+                block++;
+                break;
+            }
+        }
+        for (int i = y - 1;; i--)
+        {
+            if (i < 0)
+            {
+                block++;
+                break;
+            }
+            now = CS[x][i];
+            if (now == name)
+                count++, empty != -1 && empty++;
+            else if (now == 0)
+            {
+                if (empty == -1 && i > 0 && CS[x][i - 1] == name)
+                    empty = 0;
+                else
+                    break;
+            }
+            else
+            {
+                block++;
+                break;
+            }
+        }
+        value += count_score(count, empty, block);
+    }
+    if (dir == -1 || dir == 1)
+    {
+        count = 1, block = 0, empty = -1;
+        for (int i = x + 1;; i++)
+        {
+            if (i > 14)
+            {
+                block++;
+                break;
+            }
+            now = CS[i][y];
+            if (now == name)
+                count++;
+            else if (now == 0)
+            {
+                if (empty == -1 && i < 14 && CS[i + 1][y] == name)
+                    empty = count;
+                else
+                    break;
+            }
+            else
+            {
+                block++;
+                break;
+            }
+        }
+        for (int i = x - 1;; i--)
+        {
+            if (i < 0)
+            {
+                block++;
+                break;
+            }
+            now = CS[i][y];
+            if (now == name)
+                count++, empty != -1 && empty++;
+            else if (now == 0)
+            {
+                if (empty == -1 && i > 0 && CS[i - 1][y] == name)
+                    empty = 0;
+                else
+                    break;
+            }
+            else
+            {
+                block++;
+                break;
+            }
+        }
+        value += count_score(count, empty, block);
+    }
+    if (dir == -1 || dir == 2)
+    {
+        count = 1, block = 0, empty = -1;
+        for (int i = 1;; i++)
+        {
+            int px = x + i, py = y + i;
+            if (px > 14 || py > 14)
+            {
+                block++;
+                break;
+            }
+            now = CS[px][py];
+            if (now == name)
+                count++;
+            else if (now == 0)
+            {
+                if (empty == -1 && px < 14 && py < 14 && CS[px + 1][py + 1] == name)
+                    empty = count;
+                else
+                    break;
+            }
+            else
+            {
+                block++;
+                break;
+            }
+        }
+        for (int i = 1;; i++)
+        {
+            int px = x - i, py = y - i;
+            if (px < 0 || py < 0)
+            {
+                block++;
+                break;
+            }
+            now = CS[px][py];
+            if (now == name)
+                count++, empty != -1 && empty++;
+            else if (now == 0)
+            {
+                if (empty == -1 && px > 0 && py > 0 && CS[px - 1][py - 1] == name)
+                    empty = 0;
+                else
+                    break;
+            }
+            else
+            {
+                block++;
+                break;
+            }
+        }
+        value += count_score(count, empty, block);
+    }
+    if (dir == -1 || dir == 3)
+    {
+        count = 1, block = 0, empty = -1;
+        for (int i = 1;; i++)
+        {
+            int px = x + i, py = y - i;
+            if (px > 14 || py < 0)
+            {
+                block++;
+                break;
+            }
+            now = CS[px][py];
+            if (now == name)
+                count++;
+            else if (now == 0)
+            {
+                if (empty == -1 && px < 14 && py > 0 && CS[px + 1][py - 1] == name)
+                    empty = count;
+                else
+                    break;
+            }
+            else
+            {
+                block++;
+                break;
+            }
+        }
+        for (int i = 1;; i++)
+        {
+            int px = x - i, py = y + i;
+            if (px < 0 || py > 14)
+            {
+                block++;
+                break;
+            }
+            now = CS[px][py];
+            if (now == name)
+                count++, empty != -1 && empty++;
+            else if (now == 0)
+            {
+                if (empty == -1 && px > 0 && py < 14 && CS[px - 1][py + 1] == name)
+                    empty = 0;
+                else
+                    break;
+            }
+            else
+            {
+                block++;
+                break;
+            }
+        }
+        value += count_score(count, empty, block);
+    }
+    return value;
 }
 
 //返回价值
@@ -438,4 +697,74 @@ int count_score(int count, int empty, int block)
     else if (empty == 5 || empty == count - 5)
         return FIVE;
     return 0;
+}
+
+//剪枝
+int ab_cut(int deep, Loc *l, int alpha, int beta, char name)
+{
+    int value = evaluate(name), score;
+    P *points;
+    Loc ll;
+    if (deep <= 0 || value >= FIVE || value <= -FIVE)
+        return value;
+    points = generate(name);
+    for (P *p = points->next; p != NULL; p = p->next)
+    {
+        ll.x = p->x, ll.y = p->y;
+        put(&ll, name);
+        score = -ab_cut(deep - 1, &ll, -beta, -alpha, name == 'c' ? 'h' : 'c');
+        remove_(&ll);
+        if (score > alpha)
+            alpha = score;
+        if (score > beta)
+        {
+            return MAX - 1;
+        }
+    }
+    return alpha;
+}
+
+//生成落子位置
+P *generate(char name)
+{
+    P *head = (P *)malloc(sizeof(P)), *p = head;
+    head->next = NULL;
+    Loc a;
+    for (int i = 0; i < 15; i++)
+    {
+        a.x = i;
+        for (int j = 0; j < 15; j++)
+        {
+            if (CS[i][j] == 0)
+            {
+                a.y = j;
+                if (!has_neighbors(&a, 1, 1))
+                    continue;
+                if (!has_neighbors(&a, 2, 2))
+                    continue;
+            }
+        }
+    }
+    return p;
+}
+
+void add()
+{
+    return;
+}
+
+//完善打分
+int fix_score(int score)
+{
+    if (score < FOUR && score >= BLOCKED_FOUR)
+    {
+
+        if (score >= BLOCKED_FOUR && score < (BLOCKED_FOUR + THREE))
+            return THREE;
+        else if (score >= BLOCKED_FOUR + THREE && score < BLOCKED_FOUR * 2)
+            return FOUR;
+        else
+            return FOUR * 2;
+    }
+    return score;
 }
