@@ -16,17 +16,18 @@ typedef struct count
     char name[18];
 } C;
 
-void out(int *array, int len);                //输出数组
-int input();                                  //获取输入
-int *copy(int *array, const int len);         //数组拷贝
-int count(int *array, const int len);         //排序相关数据统计
-int *generate(const int len);                 //生成指定长度的随机数数组
-C *bubble_sort(int *array, const int len);    //冒泡排序
-C *insert_sort(int *array, const int len);    //插入排序
-C *selection_sort(int *array, const int len); //选择排序
-C *quick_sort(int *array, const int len);     //快速排序
-C *shell_sort(int *array, const int len);     //希尔排序
-C *heap_sort(int *array, const int len);      //堆排序
+void out(int *array, int len);                          //输出数组
+int input();                                            //获取输入
+int *copy(int *array, const int len);                   //数组拷贝
+int count(int *array, const int len);                   //排序相关数据统计
+int *generate(const int len);                           //生成指定长度的随机数数组
+C *bubble_sort(int *array, const int len);              //冒泡排序
+C *insert_sort(int *array, const int len);              //插入排序
+C *selection_sort(int *array, const int len);           //选择排序
+C *quick_sort(int *array, const int len);               //快速排序
+void _quick_sort(int *array, int start, int end, C *p); //快速排序
+C *shell_sort(int *array, const int len);               //希尔排序
+C *heap_sort(int *array, const int len);                //堆排序
 
 int main(void)
 {
@@ -87,13 +88,13 @@ int count(int *array, const int len)
                                       &shell_sort, &quick_sort, &heap_sort};
     C *p;
     int *q;
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 5; i++)
     {
         q = copy(array, len);
         p = sort[i](q, len);
         out(q, len);
         free(q);
-        printf("%s() --> 比较次数:%5d   ,  移动次数:%5d\n", p->name, p->num_compare, p->num_move);
+        printf("%20s() --> 比较次数:%5d   ,  移动次数:%5d\n", p->name, p->num_compare, p->num_move);
         free(p);
     }
     return 1;
@@ -164,7 +165,36 @@ C *selection_sort(int *array, const int len)
 
 C *quick_sort(int *array, const int len)
 {
-    return NULL;
+    C *p = (C *)malloc(sizeof(C));
+    p->num_compare = p->num_move = 0, memset(p->name, '\0', 18 * sizeof(char));
+    strcpy(p->name, __func__);
+    _quick_sort(array, 0, len - 1, p);
+    return p;
+}
+
+void _quick_sort(int *array, int start, int end, C *p)
+{
+    if (start >= end)
+        return;
+    int mid = array[end], temp;
+    int left = start, right = end - 1;
+    while (left < right)
+    {
+        while (++(p->num_compare) && array[left] < mid &&
+               ++(p->num_compare) && left < right)
+            left++;
+        while (++(p->num_compare) && array[right] >= mid &&
+               ++(p->num_compare) && left < right)
+            right--;
+        temp = array[left], array[left] = array[right], array[right] = temp, p->num_move += 3;
+    }
+    if (++(p->num_compare) && array[left] >= array[end])
+        temp = array[left], array[left] = array[end], array[end] = temp, p->num_move += 3;
+    else
+        left++;
+    if (left)
+        _quick_sort(array, start, left - 1, p);
+    _quick_sort(array, left + 1, end, p);
 }
 
 C *shell_sort(int *array, const int len)
@@ -178,7 +208,9 @@ C *shell_sort(int *array, const int len)
         for (i = gap; i < len; i++)
         {
             temp = array[i], p->num_move++;
-            for (j = i - gap; ++(p->num_compare) && j >= 0 && ++(p->num_compare) && array[j] > temp; j -= gap)
+            for (j = i - gap; ++(p->num_compare) && j >= 0 &&
+                              ++(p->num_compare) && array[j] > temp;
+                 j -= gap)
                 array[j + gap] = array[j], p->num_move++;
             array[j + gap] = temp, p->num_move++;
         }
