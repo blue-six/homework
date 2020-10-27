@@ -10,11 +10,11 @@ ai部分代码借鉴自：https://github.com/lihongxun945/gobang
 #include <stdlib.h>
 #include <string.h>
 
-#define DEBUG 1
+#define DEBUG 0
 #define CS chessboard
 #define MAX FIVE * 10
-#define MIX -FIVE * 10
-
+#define MIN -FIVE * 10
+#define DEEP 6
 typedef struct location
 {
     unsigned int x : 8, y : 8;
@@ -23,7 +23,7 @@ typedef struct location
 typedef struct points
 {
     unsigned int x : 8, y : 8;
-    int score;
+    int max_score, com_score, hum_score;
     struct points *next;
 } P;
 
@@ -43,42 +43,96 @@ enum score
 char chessboard[15][15] = {0};
 int hum_score[15][15] = {0}, com_score[15][15] = {0};
 
-void show_chessboard();                                       //显示棋局
-void put(Loc *l, char name);                                  //落子
-void input(Loc *l);                                           //获得玩家输入
-Loc *AI();                                                    //AI计算落子方位
-int win(Loc *l);                                              //判断是否有一方获胜
-int has_neighbors(Loc *l, int n, int count);                  //判断周围落子情况
-int evaluate(char name);                                      //评估棋局
-int _evaluate(Loc *l, char name, int dir);                    //估算单个位置的价值
-int count_score(int count, int empty, int block);             //返回价值
-char h_start();                                               //棋局开始
-int ab_cut(int deep, Loc *l, int alpha, int beta, char name); //剪枝
-P *generate(char name);                                       //生成落子位置
-void remove_(Loc *l);                                         //移除棋子
-int fix_score(int score);                                     //完善打分
+int show_chessboard(int flg);                         //显示棋局
+void put(Loc *l, char name);                          //落子
+void input(Loc *l);                                   //获得玩家输入
+Loc *AI();                                            //AI计算落子方位
+int win(Loc *l);                                      //判断是否有一方获胜
+int has_neighbors(Loc *l, int n, int count);          //判断周围落子情况
+int evaluate(char name);                              //评估棋局
+int _evaluate(Loc *l, char name, int dir);            //估算单个位置的价值
+int count_score(int count, int empty, int block);     //返回价值
+char h_start();                                       //棋局开始
+int ab_cut(int deep, int alpha, int beta, char name); //剪枝
+int ab_max(int deep, Loc *l, int alpha, int beta);    //剪枝
+P *generate(char name);                               //生成落子位置
+void remove_(Loc *l);                                 //移除棋子
+int fix_score(int score);                             //完善打分
+void add(P *head, P *n, char name);                   //添加节点
+void update(Loc *p, int dir);                         //更新单个估值
+void update_score(Loc *p);                            //更新估值
 
 int main()
 {
-    Loc l = {7, 7};
-    if (h_start() == 'c')
-        put(&l, 'c');
+    int flg;
+    char re;
     while (1)
     {
-        show_chessboard();
-        input(&l), put(&l, 'h');
-        if (win(&l))
+        Loc l = {7, 7};
+        printf("人机对战: 1 ,双人对战: 2 \n");
+        while (1)
         {
-            show_chessboard();
-            printf("玩家获胜!\n");
-            break;
+            scanf("%d", &flg);
+            if (flg == 1 || flg == 2)
+                break;
+            else
+                printf("输入数据错误!请重试!\n");
         }
-        if (win(AI()))
+        if (flg == 1)
         {
-            show_chessboard();
-            printf("计算机获胜!\n");
-            break;
+            if (h_start() == 'c')
+                put(&l, 'c');
+            while (1)
+            {
+                show_chessboard(1);
+                input(&l), put(&l, 'h');
+                if (win(&l))
+                {
+                    show_chessboard(1);
+                    printf("玩家获胜!\n");
+                    break;
+                }
+                if (win(AI()))
+                {
+                    show_chessboard(1);
+                    printf("计算机获胜!\n");
+                    break;
+                }
+            }
         }
+        else
+        {
+            int player = 0;
+            printf("玩家1先手\n");
+            while (1)
+            {
+                show_chessboard(2);
+                printf("玩家%d", player + 1);
+                input(&l);
+                if (player == 0)
+                    put(&l, '1');
+                else
+                    put(&l, '2');
+                if (win(&l))
+                {
+                    show_chessboard(2);
+                    printf("玩家获胜%d!\n", player + 1);
+                    break;
+                }
+                player ^= 1;
+            }
+        }
+        printf("再来一次?(y/n)\n");
+        while (1)
+        {
+            scanf("\n%c", &re);
+            if (re == 'y' || re == 'n')
+                break;
+            else
+                printf("输入错误,请重试!\n");
+        }
+        if (re == 'n')
+            break;
     }
     return 1;
 }
@@ -100,7 +154,7 @@ char h_start()
 }
 
 //显示棋局
-void show_chessboard()
+int show_chessboard(int flg)
 {
     printf("    a  b  c  d  e  f  g  h  i  j  k  l  m  n  o\n");
     for (int i = 0; i < 15; i++)
@@ -108,16 +162,30 @@ void show_chessboard()
         printf("%3d ", i + 1);
         for (int j = 0; j < 15; j++)
         {
-            if (CS[i][j] == 'h')
-                printf("#  ");
-            else if (CS[i][j] == 'c')
-                printf("+  ");
-            else
-                printf("   ");
+            if (flg == 1)
+            {
+                if (CS[i][j] == 'h')
+                    printf("#  ");
+                else if (CS[i][j] == 'c')
+                    printf("+  ");
+                else
+                    printf("   ");
+            }
+            else if (flg == 2)
+            {
+                if (CS[i][j] == '1')
+                    printf("#  ");
+                else if (CS[i][j] == '2')
+                    printf("+  ");
+                else
+                    printf("   ");
+            }
         }
         printf("\n");
     }
-    printf("玩家: #    计算机: +\n");
+    flg == 1 && printf("玩家: #    计算机: +\n");
+    flg == 2 && printf("玩家1: #    玩家2: +\n");
+    return 1;
 }
 
 //获得玩家输入
@@ -132,7 +200,10 @@ void input(Loc *l)
         x--, y &= 0xff, y = y - 'a';
         DEBUG &&printf("输入为:x =%3d  y =%3d\n", x, y);
         if (x >= 0 && x < 15 && y >= 0 && y < 15) //检查是否符合范围
-            break;
+            if (CS[x][y] == 0)
+                break;
+            else
+                printf("此处已有棋子！请重试:\n");
         else
             printf("输入的数据有误!请重新输入:\n");
     }
@@ -144,6 +215,7 @@ void put(Loc *l, char name)
 {
     DEBUG &&printf("落子位置为:x =%3d  y =%3d\n", l->x, l->y);
     CS[l->x][l->y] = name;
+    update_score(l);
 }
 
 //移除棋子
@@ -151,6 +223,7 @@ void remove_(Loc *l)
 {
     DEBUG &&printf("移除棋子位置为:x =%3d  y =%3d\n", l->x, l->y);
     CS[l->x][l->y] = 0;
+    update_score(l);
 }
 
 //判断是否有一方获胜
@@ -246,6 +319,15 @@ int has_neighbors(Loc *l, int n, int count)
 Loc *AI()
 {
     static Loc l = {0, 0};
+    int score;
+    for (int i = 2; i <= DEEP; i += 2)
+    {
+        score = ab_max(i, &l, MIN, MAX);
+        DEBUG &&printf("深度:%2d---score-->%10d\n", i, score);
+        if (score >= FIVE)
+            break;
+    }
+    put(&l, 'c');
     return &l;
 }
 
@@ -700,27 +782,79 @@ int count_score(int count, int empty, int block)
 }
 
 //剪枝
-int ab_cut(int deep, Loc *l, int alpha, int beta, char name)
+int ab_max(int deep, Loc *l, int alpha, int beta)
 {
-    int value = evaluate(name), score;
-    P *points;
+    int value = evaluate('c'), score;
+    P *points, *p;
     Loc ll;
     if (deep <= 0 || value >= FIVE || value <= -FIVE)
+    {
+        DEBUG &&show_chessboard(1);
         return value;
+    }
+    points = generate('c');
+    if (points->next == NULL)
+    {
+        DEBUG &&printf("无子可落---deep--->%2d\n", deep);
+        DEBUG &&show_chessboard(1);
+        free(points);
+        return value;
+    }
+    for (P *p = points->next; p != NULL; p = p->next)
+    {
+        ll.x = p->x, ll.y = p->y;
+        put(&ll, 'c');
+        score = -ab_cut(deep - 1, -beta, -alpha, 'h');
+        remove_(&ll);
+        if (score > alpha)
+            alpha = score, l->x = ll.x, l->y = ll.y;
+    }
+    for (p = points->next; p != NULL; p = p->next)
+        free(points), points = p;
+    free(points);
+    return alpha;
+}
+
+//剪枝
+int ab_cut(int deep, int alpha, int beta, char name)
+{
+    int value = evaluate(name), score;
+    P *points, *p;
+    Loc ll;
+    DEBUG &&printf("当前深度:%2d\n", deep);
+    if (deep <= 0 || value >= FIVE || value <= -FIVE)
+    {
+        DEBUG &&show_chessboard(1);
+        return value;
+    }
     points = generate(name);
+    if (points->next == NULL)
+    {
+        DEBUG &&printf("无子可落---deep--->%2d\n", deep);
+        DEBUG &&show_chessboard(1);
+        free(points);
+        return value;
+    }
     for (P *p = points->next; p != NULL; p = p->next)
     {
         ll.x = p->x, ll.y = p->y;
         put(&ll, name);
-        score = -ab_cut(deep - 1, &ll, -beta, -alpha, name == 'c' ? 'h' : 'c');
+        score = -ab_cut(deep - 1, -beta, -alpha, name == 'c' ? 'h' : 'c');
         remove_(&ll);
         if (score > alpha)
             alpha = score;
         if (score > beta)
         {
+            P *p = points;
+            for (p = points->next; p != NULL; p = p->next)
+                free(points), points = p;
+            free(points);
             return MAX - 1;
         }
     }
+    for (p = points->next; p != NULL; p = p->next)
+        free(points), points = p;
+    free(points);
     return alpha;
 }
 
@@ -728,8 +862,8 @@ int ab_cut(int deep, Loc *l, int alpha, int beta, char name)
 P *generate(char name)
 {
     P *head = (P *)malloc(sizeof(P)), *p = head;
-    head->next = NULL;
     Loc a;
+    head->next = NULL;
     for (int i = 0; i < 15; i++)
     {
         a.x = i;
@@ -742,14 +876,51 @@ P *generate(char name)
                     continue;
                 if (!has_neighbors(&a, 2, 2))
                     continue;
+                p = (P *)malloc(sizeof(P));
+                p->hum_score = hum_score[i][j];
+                p->com_score = com_score[i][j];
+                p->max_score = p->hum_score > p->com_score ? p->hum_score : p->com_score;
+                p->x = i, p->y = j, p->next = NULL;
+                add(head, p, name);
             }
         }
     }
-    return p;
+    DEBUG &&printf("生成节点成功\n");
+    return head;
 }
 
-void add()
+void add(P *head, P *n, char name)
 {
+    P *p = head->next, *q = head;
+    if (p == NULL)
+    {
+        head->next = n;
+        return;
+    }
+    while (p->next != NULL)
+    {
+        if (p->max_score > n->max_score)
+            q = p, p = p->next;
+        else if (p->max_score == n->max_score)
+        {
+            if ((name == 'c' && p->com_score < n->com_score) ||
+                (name == 'h' && p->hum_score < n->hum_score))
+            {
+                q->next = n, n->next = p;
+                break;
+            }
+            else
+                q = p, p = p->next;
+        }
+        else
+        {
+            q->next = n, n->next = p;
+            break;
+        }
+    }
+    if (n->next == NULL)
+        p->next = n;
+    DEBUG &&printf("添加节点: %c -->x:%d,y:%d\n", name, n->x, n->y);
     return;
 }
 
@@ -767,4 +938,62 @@ int fix_score(int score)
             return FOUR * 2;
     }
     return score;
+}
+
+//更新估值
+void update(Loc *p, int dir)
+{
+    if (CS[p->x][p->y] != 'c')
+        hum_score[p->x][p->y] = _evaluate(p, 'h', dir);
+    else
+        hum_score[p->x][p->y] = 0;
+    if (CS[p->x][p->y] != 'h')
+        com_score[p->x][p->y] = _evaluate(p, 'c', dir);
+    else
+        com_score[p->x][p->y] = 0;
+}
+
+//更新估值
+void update_score(Loc *p)
+{
+    int i, x = p->x, y = p->y;
+    Loc a;
+    a.x = x, a.y = y;
+    for (i = -4; i <= 4; i++)
+    {
+        if (y + i < 0)
+            continue;
+        if (y + i > 14)
+            break;
+        a.y = y + i;
+        update(&a, 0);
+    }
+    a.y = y;
+    for (i = -4; i <= 4; i++)
+    {
+        if (x + i < 0)
+            continue;
+        if (x + i > 14)
+            break;
+        a.x = x + i;
+        update(&a, 1);
+    }
+    for (i = -4; i <= 4; i++)
+    {
+        if (y + i < 0 || x + i < 0)
+            continue;
+        if (y + i > 14 || x + i > 14)
+            break;
+        a.x = x + i, a.y = y + i;
+        update(&a, 2);
+    }
+    for (i = -4; i <= 4; i++)
+    {
+        if (x + i < 0 || y - i > 14)
+            continue;
+        if (x + i > 14 || y - i < 0)
+            break;
+        a.x = x + i, a.y = y - i;
+        update(&a, 3);
+    }
 }

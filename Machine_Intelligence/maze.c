@@ -4,6 +4,8 @@
 #include <string.h>
 #include <time.h>
 
+#define __ <
+#define _ >
 typedef struct path
 {
     unsigned int x : 8, y : 8, slope : 8; //×ø±êÖµx£¬y£¬ÒÔ¼°Ä¿±êÆ«Àë³Ì¶Èslope
@@ -38,66 +40,88 @@ int col = 0;
 
 int main(void)
 {
-    main_1();
+    main_2();
 }
 
 int main_1(void)
 {
     int i, j;
-
-    printf("ÇëÊäÈëÃÔ¹¬ĞĞÊırow(0<row<100)£º");
-    scanf("%d", &row);
-    printf("ÇëÊäÈëÃÔ¹¬ÁĞÊıcol(0<col<100)£º");
-    scanf("%d", &col);
-
-    createWall(); //´´½¨ÃÔ¹¬ÍâÇ½
-
-    int choice;
-    printf("ÇëÑ¡Ôñ´´½¨Ëæ»úÃÔ¹¬»¹ÊÇ×Ô¶¨ÒåÃÔ¹¬£¨1ÎªËæ»úÃÔ¹¬£¬2Îª×Ô¶¨ÒåÃÔ¹¬£©:");
-    scanf("%d", &choice);
-    if (choice == 1)
+    char flg = 0;
+    while (1)
     {
-        createMaze(); //´´½¨ÃÔ¹¬
-    }
-    else if (choice == 2)
-    {
-        printf("\nÇëÊäÈë×Ô¶¨ÒåÃÔ¹¬µÄÇ½±ÚºÍÍ¨µÀ£¬2´ú±íÇ½±Ú£¬0´ú±íÍ¨µÀ\n");
-        createFreeMaze();
-    }
+        printf("ÇëÊäÈëÃÔ¹¬ĞĞÊırow(0<row<100)£º");
+        scanf("%d", &row);
+        printf("ÇëÊäÈëÃÔ¹¬ÁĞÊıcol(0<col<100)£º");
+        scanf("%d", &col);
 
-    printf("\nÏÔÊ¾ÃÔ¹¬£º\n");
-    for (i = 0; i < row; i++)
-    {
-        for (j = 0; j < col; j++)
+        createWall(); //´´½¨ÃÔ¹¬ÍâÇ½
+
+        int choice;
+        printf("ÇëÑ¡Ôñ´´½¨Ëæ»úÃÔ¹¬»¹ÊÇ×Ô¶¨ÒåÃÔ¹¬£¨1ÎªËæ»úÃÔ¹¬£¬2Îª×Ô¶¨ÒåÃÔ¹¬£©:");
+        scanf("%d", &choice);
+        if (choice == 1)
         {
-            if (maze[i][j] == 2)
-                printf("##");
-            else
-                printf("  ");
+            createMaze(); //´´½¨ÃÔ¹¬
         }
-        printf("\n");
-    }
-
-    if (visit_A_star(startI, startJ) == 0)
-    {
-        printf("\nÃ»ÓĞÕÒµ½³ö¿Ú£¡\n");
-    }
-    else
-    {
-        printf("\nÏÔÊ¾Â·¾¶£º\n");
-        for (i = 0; i < row; i++)
+        else if (choice == 2)
         {
-            for (j = 0; j < col; j++)
+            printf("\nÇëÊäÈë×Ô¶¨ÒåÃÔ¹¬µÄÇ½±ÚºÍÍ¨µÀ£¬2´ú±íÇ½±Ú£¬0´ú±íÍ¨µÀ\n");
+            createFreeMaze();
+        }
+
+        if (visit_A_star(startI, startJ) == 0)
+        {
+            printf("\nÃ»ÓĞÕÒµ½³ö¿Ú£¡\n");
+            for (i = 0; i < row; i++)
             {
-                if (maze[i][j] == 2)
-                    printf("##");
-                else if (maze[i][j] == 1)
-                    printf("¡¤¡¤");
-                else
-                    printf("  ");
+                for (j = 0; j < col; j++)
+                {
+                    if (maze[i][j] == 2)
+                        printf("##");
+                    else if (maze[i][j] == 1)
+                        printf("¡¤¡¤");
+                    else if (maze[i][j] == 6)
+                        printf("kk");
+                    else if (maze[i][j] == 5)
+                        printf("ww");
+                    else
+                        printf("  ");
+                }
+                printf("\n");
             }
-            printf("\n");
         }
+        else
+        {
+            printf("\nÏÔÊ¾Â·¾¶£º\n");
+            for (i = 0; i < row; i++)
+            {
+                for (j = 0; j < col; j++)
+                {
+                    if (maze[i][j] == 2)
+                        printf("##");
+                    else if (maze[i][j] == 1)
+                        printf("¡¤¡¤");
+                    else if (maze[i][j] == 6)
+                        printf("k ");
+                    else if (maze[i][j] == 5)
+                        printf("w ");
+                    else
+                        printf("  ");
+                }
+                printf("\n");
+            }
+        }
+        printf("ÊÇ·ñÍË³ö:(y/n)");
+        while (1)
+        {
+            scanf("\n%c", &flg);
+            if (flg == 'y')
+                break;
+            else
+                printf("ÊäÈë´íÎó,ÇëÖØÊÔ!\n");
+        }
+        if (flg == 'y')
+            break;
     }
 
     system("pause");
@@ -108,8 +132,9 @@ int main_1(void)
 int main_2(void) //Á¬ĞøÉú³É¹Ì¶¨´óĞ¡µÄËæ»úÃÔ¹¬²¢Çó½â£¬Í¬Ê±Õ¹Ê¾À©Õ¹µÄ½ÚµãÒÔ¼°Ïà¹ØÊı¾İÍ³¼Æ¡£
 {
     int i, j;
-    row = 20;
-    col = 20;
+    row = 70;
+    col = 70;
+    char flg = 0;
 
     while (1)
     {
@@ -157,9 +182,19 @@ int main_2(void) //Á¬ĞøÉú³É¹Ì¶¨´óĞ¡µÄËæ»úÃÔ¹¬²¢Çó½â£¬Í¬Ê±Õ¹Ê¾À©Õ¹µÄ½ÚµãÒÔ¼°Ïà¹ØÊ
                 printf("\n");
             }
         }
-
-        system("pause");
+        printf("ÊÇ·ñÍË³ö:(y/n)");
+        while (1)
+        {
+            scanf("\n%c", &flg);
+            if (flg == 'y')
+                break;
+            else
+                printf("ÊäÈë´íÎó,ÇëÖØÊÔ!\n");
+        }
+        if (flg == 'y')
+            break;
     }
+    system("pause");
 
     return 0;
 }
@@ -388,13 +423,13 @@ void add(P *head, P *n) //Ïòopen_listÖĞ¼ÓÈç½Úµã
         return;
     }
     else
-        q = q->next;                     //·ñÔòµ±Ç°Ö¸ÕëÏòºóÒÆ¶¯
-    char flg = 1;                        //¼ÓÈëÊ§°Ü±êÖ¾
-    while (q != NULL && q->next != NULL) //±äÀúµ½Ä©Î²¾ÍÍË³ö
+        q = q->next;  //·ñÔòµ±Ç°Ö¸ÕëÏòºóÒÆ¶¯
+    char flg = 1;     //¼ÓÈëÊ§°Ü±êÖ¾
+    while (q != NULL) //±éÀúµ½Ä©Î²¾ÍÍË³ö
     {
         if (q->weight < n->weight ||   //ÅÅĞòµÄÅĞ¶ÏÌõ¼ş£¬È¨ÖµĞ¡µÄ·ÅÔÚÇ°·½
             (q->weight == n->weight && //Èç¹ûÈ¨ÖµÏàµÈ
-             (q->value < n->value ||   //¹ÀÖµĞ¡µÄ·ÅÔÚÇ°Ãæ
+             (q->value __ n->value ||  //¹ÀÖµĞ¡µÄ·ÅÔÚÇ°Ãæ
               (q->value == n->value && //Èç¹û¹ÀÖµÏàµÈ
                q->slope < n->slope)))) //¶ÔÄ¿±êÆ«Àë½ÏĞ¡µÄ·ÅÔÚÇ°Ãæ
             p = p->next, q = q->next;
@@ -406,7 +441,7 @@ void add(P *head, P *n) //Ïòopen_listÖĞ¼ÓÈç½Úµã
         }
     }
     if (flg) //Èç¹û¼ÓÈëÊ§°Ü£¬Ö±½ÓÁ´½Óµ½Ä©Î²
-        q->next = n;
+        p->next = n;
 }
 
 int refresh(P *head, P *n) //¶Ôµ¥Ò»½ÚµãÖØĞÂÅÅĞò
@@ -415,7 +450,7 @@ int refresh(P *head, P *n) //¶Ôµ¥Ò»½ÚµãÖØĞÂÅÅĞò
     while (q != NULL && q->next != NULL) //±éÀúµ½Ä©Î²¾ÍÍË³ö
     {
         if ((q->weight == n->weight && //ÖØĞÂÅÅĞòµÄ¹æÔò£¬Óëadd()ÏàÍ¬
-             (q->value > n->value ||
+             (q->value _ n->value ||
               (q->value == n->value &&
                q->slope > n->slope))) ||
             q->weight > n->weight)
