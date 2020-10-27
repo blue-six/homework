@@ -6,6 +6,7 @@
 
 #define __ <
 #define _ >
+#define MAX_SIZE 200
 typedef struct path
 {
     unsigned int x : 8, y : 8, slope : 8; //×ø±êÖµx£¬y£¬ÒÔ¼°Ä¿±êÆ«Àë³Ì¶Èslope
@@ -28,12 +29,16 @@ P *new_p(int x, int y, int deep);          //´´½¨ĞÂ½Úµã
 int refresh(P *head, P *n);                //¸üĞÂ½ÚµãÔÚopen_listÖĞµÄÎ»ÖÃ
 int main_1(void);                          //Ô­Ê¼Ö÷º¯Êı
 int main_2(void);                          //Ä§¸ÄºóÓÃÓÚ²âÑéµÄÖ÷º¯Êı
+void show_other();                         //ÏÔÊ¾ÆäËûĞÅÏ¢
 
 int startI = 1,
     startJ = 1; // Èë¿Ú
 int success = 0;
 //ÃÔ¹¬Êı×é
-int maze[100][100];
+int maze[MAX_SIZE][MAX_SIZE];
+unsigned short maze_weight[MAX_SIZE][MAX_SIZE] = {0};
+unsigned short maze_value[MAX_SIZE][MAX_SIZE] = {0};
+unsigned short maze_deep[MAX_SIZE][MAX_SIZE] = {0};
 int row = 0;
 int col = 0;
 //ÃÔ¹¬¾ØÕó£¬2´ú±íÇ½±Ú£¬0´ú±íÍ¨µÀ
@@ -49,9 +54,9 @@ int main_1(void)
     char flg = 0;
     while (1)
     {
-        printf("ÇëÊäÈëÃÔ¹¬ĞĞÊırow(0<row<100)£º");
+        printf("ÇëÊäÈëÃÔ¹¬ĞĞÊırow(0<row<%d)£º", MAX_SIZE);
         scanf("%d", &row);
-        printf("ÇëÊäÈëÃÔ¹¬ÁĞÊıcol(0<col<100)£º");
+        printf("ÇëÊäÈëÃÔ¹¬ÁĞÊıcol(0<col<%d)£º", MAX_SIZE);
         scanf("%d", &col);
 
         createWall(); //´´½¨ÃÔ¹¬ÍâÇ½
@@ -132,12 +137,15 @@ int main_1(void)
 int main_2(void) //Á¬ĞøÉú³É¹Ì¶¨´óĞ¡µÄËæ»úÃÔ¹¬²¢Çó½â£¬Í¬Ê±Õ¹Ê¾À©Õ¹µÄ½ÚµãÒÔ¼°Ïà¹ØÊı¾İÍ³¼Æ¡£
 {
     int i, j;
-    row = 70;
-    col = 70;
+    row = 30;
+    col = 30;
     char flg = 0;
 
     while (1)
     {
+        memset(maze_weight, 0, MAX_SIZE * MAX_SIZE * sizeof(unsigned short));
+        memset(maze_deep, 0, MAX_SIZE * MAX_SIZE * sizeof(unsigned short));
+        memset(maze_value, 0, MAX_SIZE * MAX_SIZE * sizeof(unsigned short));
         createWall(); //´´½¨ÃÔ¹¬ÍâÇ½
         createMaze(); //´´½¨ÃÔ¹¬
         if (visit_A_star(startI, startJ) == 0)
@@ -182,11 +190,22 @@ int main_2(void) //Á¬ĞøÉú³É¹Ì¶¨´óĞ¡µÄËæ»úÃÔ¹¬²¢Çó½â£¬Í¬Ê±Õ¹Ê¾À©Õ¹µÄ½ÚµãÒÔ¼°Ïà¹ØÊ
                 printf("\n");
             }
         }
-        printf("ÊÇ·ñÍË³ö:(y/n)");
+        printf("ÊÇ·ñÏÔÊ¾ÆäËûĞÅÏ¢:(y/n)\n");
         while (1)
         {
             scanf("\n%c", &flg);
-            if (flg == 'y')
+            if (flg == 'y' || flg == 'n')
+                break;
+            else
+                printf("ÊäÈë´íÎó,ÇëÖØÊÔ!\n");
+        }
+        if (flg == 'y')
+            show_other();
+        printf("ÊÇ·ñÍË³ö:(y/n)\n");
+        while (1)
+        {
+            scanf("\n%c", &flg);
+            if (flg == 'y' || flg == 'n')
                 break;
             else
                 printf("ÊäÈë´íÎó,ÇëÖØÊÔ!\n");
@@ -399,6 +418,9 @@ int visit_A_star(int row2, int col2) //Í¨¹ıA*Ëã·¨Ñ°ÕÒÃÔ¹¬³öÂ·
         {
             if (map[i][j] != 0) //Èç¹û´æ´¢²»Îª0£¬ËµÃ÷´æÓĞ½ÚµãĞÅÏ¢
             {
+                maze_deep[i][j] = map[i][j]->deep;
+                maze_value[i][j] = map[i][j]->value;
+                maze_weight[i][j] = map[i][j]->weight;             //´æ´¢ĞÅÏ¢
                 ++m;                                               //Éú³É½ÚµãÊı¼Ó1
                 if (map[i][j]->closed && ++n)                      //Èç¹û½ÚµãÒÑ¹Ø±Õ£¬À©Õ¹½ÚµãÊı¼Ó1
                     maze[i][j] = maze[i][j] == 0 ? 6 : maze[i][j]; //Èç¹ûÃÔ¹¬´Ë´¦Ã»ÓĞÆäËû¼ÇÂ¼£¬±ê¼ÇÎªÒÑÀ©Õ¹
@@ -500,4 +522,50 @@ P *new_p(int x, int y, int deep) //´´½¨ĞÂ½Úµã
 int get_value(int x, int y) //»ñµÃ´«ÈëÎ»ÖÃµÄÂ·¾¶¹ÀÖµ
 {
     return abs(row - 2 - x) + abs(col - 2 - y);
+}
+
+void show_other()
+{
+    printf("ÃÔ¹¬È¨Öµ:\n");
+    for (int i = 0; i < row; i++)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            if (maze[i][j] == 2)
+                printf("####");
+            else if (maze_weight[i][j] == 0)
+                printf("    ");
+            else
+                printf("%3d ", maze_weight[i][j]);
+        }
+        printf("\n");
+    }
+    printf("ÃÔ¹¬deep:\n");
+    for (int i = 0; i < row; i++)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            if (maze[i][j] == 2)
+                printf("####");
+            else if (maze_weight[i][j] == 0)
+                printf("    ");
+            else
+                printf("%3d ", maze_deep[i][j]);
+        }
+        printf("\n");
+    }
+    printf("ÃÔ¹¬¹ÀÖµ:\n");
+    for (int i = 0; i < row; i++)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            if (maze[i][j] == 2)
+                printf("####");
+            else if (maze_weight[i][j] == 0)
+                printf("    ");
+            else
+                printf("%3d ", maze_value[i][j]);
+        }
+        printf("\n");
+    }
 }
