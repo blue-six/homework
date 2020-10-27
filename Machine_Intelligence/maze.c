@@ -40,8 +40,8 @@ int startI = 1,
 int success = 0;
 //迷宫数组
 int maze[100][100];
-int row = 0;
-int col = 0;
+int row = 40;
+int col = 40;
 //迷宫矩阵，2代表墙壁，0代表通道
 
 int main(void)
