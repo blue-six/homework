@@ -6,6 +6,9 @@
 
 #define DEBUG 1
 
+#define __ <
+#define _ >
+#define MAX_SIZE 200
 typedef struct path
 {
     unsigned int x : 8, y : 8, slope : 8; //×ø±êÖµx£¬y£¬ÒÔ¼°Ä¿±êÆ«Àë³Ì¶Èslope
@@ -34,14 +37,20 @@ void find(P *head);                                                //ÃÔ¹¬¸³Öµ
 int get_good_deep(int x, int y);                                   //ÆúÓÃ
 void _refresh_deep(P *p, P *q);                                    //ÆúÓÃ
 int refresh_deep(P *head, int row3, int col3, P *map[row3][col3]); //ÆúÓÃ
+void show_other();                                                 //ÏÔÊ¾ÆäËûĞÅÏ¢
 
 int startI = 1,
     startJ = 1; // Èë¿Ú
+int count;
 int success = 0;
-//ÃÔ¹¬Êı×é
-int maze[100][100];
-int row = 40;
-int col = 40;
+
+int maze[MAX_SIZE][MAX_SIZE];                         //ÃÔ¹¬Êı×é
+unsigned short maze_weight[MAX_SIZE][MAX_SIZE] = {0}; //ÃÔ¹¬È¨Öµ
+unsigned short maze_value[MAX_SIZE][MAX_SIZE] = {0};  //ÃÔ¹¬¹ÀÖµ
+unsigned short maze_deep[MAX_SIZE][MAX_SIZE] = {0};   //ÃÔ¹¬Éî¶È
+unsigned short maze_slope[MAX_SIZE][MAX_SIZE] = {0};  //ÃÔ¹¬Ä¿±êÆ«Àë¶È
+int row = 0;
+int col = 0;
 //ÃÔ¹¬¾ØÕó£¬2´ú±íÇ½±Ú£¬0´ú±íÍ¨µÀ
 
 int main(void)
@@ -52,60 +61,97 @@ int main(void)
 int main_1(void)
 {
     int i, j;
-
-    printf("ÇëÊäÈëÃÔ¹¬ĞĞÊırow(0<row<100)£º");
-    scanf("%d", &row);
-    printf("ÇëÊäÈëÃÔ¹¬ÁĞÊıcol(0<col<100)£º");
-    scanf("%d", &col);
-
-    createWall(); //´´½¨ÃÔ¹¬ÍâÇ½
-
-    int choice;
-    printf("ÇëÑ¡Ôñ´´½¨Ëæ»úÃÔ¹¬»¹ÊÇ×Ô¶¨ÒåÃÔ¹¬£¨1ÎªËæ»úÃÔ¹¬£¬2Îª×Ô¶¨ÒåÃÔ¹¬£©:");
-    scanf("%d", &choice);
-    if (choice == 1)
+    char flg = 0;
+    while (1)
     {
-        createMaze(); //´´½¨ÃÔ¹¬
-    }
-    else if (choice == 2)
-    {
-        printf("\nÇëÊäÈë×Ô¶¨ÒåÃÔ¹¬µÄÇ½±ÚºÍÍ¨µÀ£¬2´ú±íÇ½±Ú£¬0´ú±íÍ¨µÀ\n");
-        createFreeMaze();
-    }
+        memset(maze_weight, 0, MAX_SIZE * MAX_SIZE * sizeof(unsigned short));
+        memset(maze_deep, 0, MAX_SIZE * MAX_SIZE * sizeof(unsigned short));
+        memset(maze_value, 0, MAX_SIZE * MAX_SIZE * sizeof(unsigned short));
+        memset(maze_slope, 0x7fff, MAX_SIZE * MAX_SIZE * sizeof(unsigned short));
+        printf("ÇëÊäÈëÃÔ¹¬ĞĞÊırow(0<row<%d)£º", MAX_SIZE);
+        scanf("%d", &row);
+        printf("ÇëÊäÈëÃÔ¹¬ÁĞÊıcol(0<col<%d)£º", MAX_SIZE);
+        scanf("%d", &col);
 
-    printf("\nÏÔÊ¾ÃÔ¹¬£º\n");
-    for (i = 0; i < row; i++)
-    {
-        for (j = 0; j < col; j++)
+        createWall(); //´´½¨ÃÔ¹¬ÍâÇ½
+
+        int choice;
+        printf("ÇëÑ¡Ôñ´´½¨Ëæ»úÃÔ¹¬»¹ÊÇ×Ô¶¨ÒåÃÔ¹¬£¨1ÎªËæ»úÃÔ¹¬£¬2Îª×Ô¶¨ÒåÃÔ¹¬£©:");
+        scanf("%d", &choice);
+        if (choice == 1)
         {
-            if (maze[i][j] == 2)
-                printf("##");
-            else
-                printf("  ");
+            createMaze(); //´´½¨ÃÔ¹¬
         }
-        printf("\n");
-    }
-
-    if (visit_A_star(startI, startJ) == 0)
-    {
-        printf("\nÃ»ÓĞÕÒµ½³ö¿Ú£¡\n");
-    }
-    else
-    {
-        printf("\nÏÔÊ¾Â·¾¶£º\n");
-        for (i = 0; i < row; i++)
+        else if (choice == 2)
         {
-            for (j = 0; j < col; j++)
+            printf("\nÇëÊäÈë×Ô¶¨ÒåÃÔ¹¬µÄÇ½±ÚºÍÍ¨µÀ£¬2´ú±íÇ½±Ú£¬0´ú±íÍ¨µÀ\n");
+            createFreeMaze();
+        }
+
+        if (visit_A_star(startI, startJ) == 0)
+        {
+            printf("\nÃ»ÓĞÕÒµ½³ö¿Ú£¡\n");
+            for (i = 0; i < row; i++)
             {
-                if (maze[i][j] == 2)
-                    printf("##");
-                else if (maze[i][j] == 1)
-                    printf("¡¤¡¤");
-                else
-                    printf("  ");
+                for (j = 0; j < col; j++)
+                {
+                    if (maze[i][j] == 2)
+                        printf("##");
+                    else if (maze[i][j] == 1)
+                        printf("¡¤¡¤");
+                    else if (maze[i][j] == 6)
+                        printf("kk");
+                    else if (maze[i][j] == 5)
+                        printf("ww");
+                    else
+                        printf("  ");
+                }
+                printf("\n");
             }
-            printf("\n");
         }
+        else
+        {
+            printf("\nÏÔÊ¾Â·¾¶£º\n");
+            for (i = 0; i < row; i++)
+            {
+                for (j = 0; j < col; j++)
+                {
+                    if (maze[i][j] == 2)
+                        printf("##");
+                    else if (maze[i][j] == 1)
+                        printf("¡¤¡¤");
+                    else if (maze[i][j] == 6)
+                        printf("k ");
+                    else if (maze[i][j] == 5)
+                        printf("w ");
+                    else
+                        printf("  ");
+                }
+                printf("\n");
+            }
+        }
+        printf("ÊÇ·ñÏÔÊ¾ÆäËûĞÅÏ¢:(y/n)\n");
+        while (1)
+        {
+            scanf("\n%c", &flg);
+            if (flg == 'y' || flg == 'n')
+                break;
+            else
+                printf("ÊäÈë´íÎó,ÇëÖØÊÔ!\n");
+        }
+        if (flg == 'y')
+            show_other();
+        printf("ÊÇ·ñÍË³ö:(y/n)\n");
+        while (1)
+        {
+            scanf("\n%c", &flg);
+            if (flg == 'y' || flg == 'n')
+                break;
+            else
+                printf("ÊäÈë´íÎó,ÇëÖØÊÔ!\n");
+        }
+        if (flg == 'y')
+            break;
     }
 
     system("pause");
@@ -116,9 +162,16 @@ int main_1(void)
 int main_2(void) //Á¬ĞøÉú³É¹Ì¶¨´óĞ¡µÄËæ»úÃÔ¹¬²¢Çó½â£¬Í¬Ê±Õ¹Ê¾À©Õ¹µÄ½ÚµãÒÔ¼°Ïà¹ØÊı¾İÍ³¼Æ¡£
 {
     int i, j;
+    row = 30;
+    col = 30;
+    char flg = 0;
 
     while (1)
     {
+        memset(maze_weight, 0, MAX_SIZE * MAX_SIZE * sizeof(unsigned short));
+        memset(maze_deep, 0, MAX_SIZE * MAX_SIZE * sizeof(unsigned short));
+        memset(maze_value, 0, MAX_SIZE * MAX_SIZE * sizeof(unsigned short));
+        memset(maze_slope, 0x7fff, MAX_SIZE * MAX_SIZE * sizeof(unsigned short));
         createWall(); //´´½¨ÃÔ¹¬ÍâÇ½
         createMaze(); //´´½¨ÃÔ¹¬
         if (visit_A_star(startI, startJ) == 0)
@@ -165,9 +218,30 @@ int main_2(void) //Á¬ĞøÉú³É¹Ì¶¨´óĞ¡µÄËæ»úÃÔ¹¬²¢Çó½â£¬Í¬Ê±Õ¹Ê¾À©Õ¹µÄ½ÚµãÒÔ¼°Ïà¹ØÊ
                 printf("\n");
             }
         }
-
-        system("pause");
+        printf("ÊÇ·ñÏÔÊ¾ÆäËûĞÅÏ¢:(y/n)\n");
+        while (1)
+        {
+            scanf("\n%c", &flg);
+            if (flg == 'y' || flg == 'n')
+                break;
+            else
+                printf("ÊäÈë´íÎó,ÇëÖØÊÔ!\n");
+        }
+        if (flg == 'y')
+            show_other();
+        printf("ÊÇ·ñÍË³ö:(y/n)\n");
+        while (1)
+        {
+            scanf("\n%c", &flg);
+            if (flg == 'y' || flg == 'n')
+                break;
+            else
+                printf("ÊäÈë´íÎó,ÇëÖØÊÔ!\n");
+        }
+        if (flg == 'y')
+            break;
     }
+    system("pause");
 
     return 0;
 }
@@ -251,7 +325,7 @@ int visit_aimless_dfs(int row2, int col2) //Ã¤Ä¿Éî¶ÈÓÅÏÈËÑË÷¡£
 int visit_A_star(int row2, int col2) //Í¨¹ıA*Ëã·¨Ñ°ÕÒÃÔ¹¬³öÂ·
 {
     P *map[row][col]; //´æ´¢½ÚµãĞÅÏ¢µÄÊı×é
-    char x, y, flg = 0;
+    int x, y, flg = 0;
     int deep, weight = INT_MAX;              //µ±Ç°±éÀúµ½µÄ½ÚµãµÄÏà¹ØĞÅÏ¢
     memset(map, 0, row * col * sizeof(P *)); //½«Êı×éÄÚÈİ³õÊ¼»¯Îª0
     P *open_list = (P *)malloc(sizeof(P)), *p, *q;
@@ -293,6 +367,10 @@ int visit_A_star(int row2, int col2) //Í¨¹ıA*Ëã·¨Ñ°ÕÒÃÔ¹¬³öÂ·
         {
             if (map[i][j] != 0) //Èç¹û´æ´¢²»Îª0£¬ËµÃ÷´æÓĞ½ÚµãĞÅÏ¢
             {
+                maze_deep[i][j] = map[i][j]->deep;
+                maze_value[i][j] = map[i][j]->value;
+                maze_weight[i][j] = map[i][j]->weight;             //´æ´¢ĞÅÏ¢
+                maze_slope[i][j] = map[i][j]->slope;               //´æ´¢ĞÅÏ¢
                 ++m;                                               //Éú³É½ÚµãÊı¼Ó1
                 if (map[i][j]->closed && ++n)                      //Èç¹û½ÚµãÒÑ¹Ø±Õ£¬À©Õ¹½ÚµãÊı¼Ó1
                     maze[i][j] = maze[i][j] == 0 ? 6 : maze[i][j]; //Èç¹ûÃÔ¹¬´Ë´¦Ã»ÓĞÆäËû¼ÇÂ¼£¬±ê¼ÇÎªÒÑÀ©Õ¹
@@ -311,19 +389,19 @@ int visit_A_star(int row2, int col2) //Í¨¹ıA*Ëã·¨Ñ°ÕÒÃÔ¹¬³öÂ·
 void add(P *head, P *n) //Ïòopen_listÖĞ¼ÓÈç½Úµã
 {
     P *p = head, *q = p;
+    char flg = 1;           //¼ÓÈëÊ§°Ü±êÖ¾
     if (head->next == NULL) //Í·½ÚµãÖ®ºóÎª¿ÕµÄÏà¹ØÅĞ¶Ï
     {
         head->next = n; //Ö®ºóÎª¿ÕÔòÖ±½ÓÁ´½Ó·µ»Ø
         return;
     }
     else
-        q = q->next;                     //·ñÔòµ±Ç°Ö¸ÕëÏòºóÒÆ¶¯
-    char flg = 1;                        //¼ÓÈëÊ§°Ü±êÖ¾
-    while (q != NULL && q->next != NULL) //±äÀúµ½Ä©Î²¾ÍÍË³ö
+        q = q->next;  //·ñÔòµ±Ç°Ö¸ÕëÏòºóÒÆ¶¯
+    while (q != NULL) //±éÀúµ½Ä©Î²¾ÍÍË³ö
     {
         if (q->weight < n->weight ||   //ÅÅĞòµÄÅĞ¶ÏÌõ¼ş£¬È¨ÖµĞ¡µÄ·ÅÔÚÇ°·½
             (q->weight == n->weight && //Èç¹ûÈ¨ÖµÏàµÈ
-             (q->value < n->value ||   //¹ÀÖµĞ¡µÄ·ÅÔÚÇ°Ãæ
+             (q->value __ n->value ||  //¹ÀÖµĞ¡µÄ·ÅÔÚÇ°Ãæ
               (q->value == n->value && //Èç¹û¹ÀÖµÏàµÈ
                q->slope < n->slope)))) //¶ÔÄ¿±êÆ«Àë½ÏĞ¡µÄ·ÅÔÚÇ°Ãæ
             p = p->next, q = q->next;
@@ -335,7 +413,7 @@ void add(P *head, P *n) //Ïòopen_listÖĞ¼ÓÈç½Úµã
         }
     }
     if (flg) //Èç¹û¼ÓÈëÊ§°Ü£¬Ö±½ÓÁ´½Óµ½Ä©Î²
-        q->next = n;
+        p->next = n;
 }
 
 int refresh(P *head, P *n) //¶Ôµ¥Ò»½ÚµãÖØĞÂÅÅĞò
@@ -344,7 +422,7 @@ int refresh(P *head, P *n) //¶Ôµ¥Ò»½ÚµãÖØĞÂÅÅĞò
     while (q != NULL && q->next != NULL) //±éÀúµ½Ä©Î²¾ÍÍË³ö
     {
         if ((q->weight == n->weight && //ÖØĞÂÅÅĞòµÄ¹æÔò£¬Óëadd()ÏàÍ¬
-             (q->value > n->value ||
+             (q->value _ n->value ||
               (q->value == n->value &&
                q->slope > n->slope))) ||
             q->weight > n->weight)
@@ -415,8 +493,8 @@ P *new_p(int x, int y, int deep) //´´½¨ĞÂ½Úµã
     P *p = (P *)malloc(sizeof(P)); //ÉêÇëÄÚ´æ¿Õ¼ä
     p->deep = deep, p->closed = 0;
     p->x = x, p->y = y;
-    n = row - 2 - x;
-    p->slope = abs((col - 2 / row - 2) - abs(n == 0 ? INT_MAX : (col - 2 - y) / n));
+    n = ((col - startJ - 1) * 1000) / ((row - startI - 1));
+    p->slope = abs(y - startJ - (n * (x - startI) / 1000));
     p->value = get_value(p->x, p->y);
     p->weight = p->deep + p->value, p->next = NULL;
     memset(p->parent, 0, 3 * sizeof(P *)); //½øĞĞÏà¹Ø³õÊ¼»¯
@@ -490,4 +568,63 @@ void find(P *head) //µİ¹é¼ÇÂ¼ÆäËûÂ·¾¶
     find(head->parent[2]);
     if (n == 1)
         maze[head->x][head->y] = 1;
+}
+void show_other()
+{
+    printf("ÃÔ¹¬È¨Öµ:\n");
+    for (int i = 0; i < row; i++)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            if (maze[i][j] == 2)
+                printf("####");
+            else if (maze_weight[i][j] == 0)
+                printf("    ");
+            else
+                printf("%3d ", maze_weight[i][j]);
+        }
+        printf("\n");
+    }
+    printf("ÃÔ¹¬deep:\n");
+    for (int i = 0; i < row; i++)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            if (maze[i][j] == 2)
+                printf("####");
+            else if (maze_weight[i][j] == 0)
+                printf("    ");
+            else
+                printf("%3d ", maze_deep[i][j]);
+        }
+        printf("\n");
+    }
+    printf("ÃÔ¹¬¹ÀÖµ:\n");
+    for (int i = 0; i < row; i++)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            if (maze[i][j] == 2)
+                printf("####");
+            else if (maze_weight[i][j] == 0)
+                printf("    ");
+            else
+                printf("%3d ", maze_value[i][j]);
+        }
+        printf("\n");
+    }
+    printf("ÃÔ¹¬slope:\n");
+    for (int i = 0; i < row; i++)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            if (maze[i][j] == 2)
+                printf("####");
+            else if (maze_slope[i][j] >= 5000)
+                printf("    ");
+            else
+                printf("%3d ", maze_slope[i][j]);
+        }
+        printf("\n");
+    }
 }
