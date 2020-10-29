@@ -492,11 +492,12 @@ int refresh(P *head, P *n) //对单一节点重新排序
     P *p = head, *q = head->next, *now = NULL;
     while (q != NULL && q->next != NULL) //遍历到末尾就退出
     {
-        if ((q->weight == n->weight && //重新排序的规则，与add()相同
-             (q->value _ n->value ||
-              (q->value == n->value &&
-               q->slope > n->slope))) ||
-            q->weight > n->weight)
+        if (now == NULL &&
+            ((q->weight == n->weight && //重新排序的规则，与add()相同
+              (q->value _ n->value ||
+               (q->value == n->value &&
+                q->slope > n->slope))) ||
+             q->weight > n->weight))
             now = p; //找到目标位置并记录
         p = p->next;
         if (q->next != n) //找到节点所在位置
