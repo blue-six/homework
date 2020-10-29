@@ -37,10 +37,10 @@ int count;
 int success = 0;
 //迷宫数组
 int maze[MAX_SIZE][MAX_SIZE];
-unsigned short maze_weight[MAX_SIZE][MAX_SIZE] = {0};
-unsigned short maze_value[MAX_SIZE][MAX_SIZE] = {0};
-unsigned short maze_deep[MAX_SIZE][MAX_SIZE] = {0};
-unsigned short maze_slope[MAX_SIZE][MAX_SIZE] = {0};
+unsigned short maze_weight[MAX_SIZE][MAX_SIZE] = {0}; //迷宫权值
+unsigned short maze_value[MAX_SIZE][MAX_SIZE] = {0};  //迷宫估值
+unsigned short maze_deep[MAX_SIZE][MAX_SIZE] = {0};   //迷宫深度
+unsigned short maze_slope[MAX_SIZE][MAX_SIZE] = {0};  //迷宫目标偏离度
 int row = 0;
 int col = 0;
 //迷宫矩阵，2代表墙壁，0代表通道
