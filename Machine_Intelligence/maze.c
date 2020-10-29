@@ -38,6 +38,7 @@ int get_good_deep(int x, int y);                                   //弃用
 void _refresh_deep(P *p, P *q);                                    //弃用
 int refresh_deep(P *head, int row3, int col3, P *map[row3][col3]); //弃用
 void show_other();                                                 //显示其他信息
+int out_point(int n, P *p);
 
 int startI = 1,
     startJ = 1; // 入口
@@ -124,6 +125,8 @@ int main_1(void)
                         printf("k ");
                     else if (maze[i][j] == 5)
                         printf("w ");
+                    else if (maze[i][j] == 10)
+                        printf("--");
                     else
                         printf("  ");
                 }
@@ -162,8 +165,8 @@ int main_1(void)
 int main_2(void) //连续生成固定大小的随机迷宫并求解，同时展示扩展的节点以及相关数据统计。
 {
     int i, j;
-    row = 30;
-    col = 30;
+    row = 20;
+    col = 20;
     char flg = 0;
 
     while (1)
@@ -339,7 +342,10 @@ int visit_A_star(int row2, int col2) //通过A*算法寻找迷宫出路
         x = p->x, y = p->y, deep = p->deep; //得到节点相关信息
         // refresh_deep(p, row, col, map);
         if (p->weight > weight) //(p->value + get_good_deep(x, y))
+        {
+            printf("退出: x=%3d y=%3d weight=%3d", p->x, p->y, p->weight);
             break;
+        }
         p->closed = 1;                                      //将此节点标记为关闭
         if ((x == row - 2) && (y == col - 2) && flg++ == 0) //如果找到出口即将flg置1并跳出循环
             weight = p->weight, q = p,
@@ -389,6 +395,7 @@ int visit_A_star(int row2, int col2) //通过A*算法寻找迷宫出路
 void add(P *head, P *n) //向open_list中加如节点
 {
     P *p = head, *q = p;
+    int num = 0;
     char flg = 1;           //加入失败标志
     if (head->next == NULL) //头节点之后为空的相关判断
     {
@@ -399,21 +406,24 @@ void add(P *head, P *n) //向open_list中加如节点
         q = q->next;  //否则当前指针向后移动
     while (q != NULL) //遍历到末尾就退出
     {
+        DEBUG &&out_point(num++, p);
         if (q->weight < n->weight ||   //排序的判断条件，权值小的放在前方
             (q->weight == n->weight && //如果权值相等
              (q->value __ n->value ||  //估值小的放在前面
               (q->value == n->value && //如果估值相等
                q->slope < n->slope)))) //对目标偏离较小的放在前面
-            p = p->next, q = q->next;
+            p = p->next,
+            q = q->next;
         else //满足条件后进行插入
         {
+            DEBUG &&out_point(num++, n);
             n->next = q, p->next = n;
             flg = 0; //加入成功flg置0
             break;   //插入完成跳出循环
         }
     }
     if (flg) //如果加入失败，直接链接到末尾
-        p->next = n;
+        p->next = n, DEBUG && out_point(num++, n);
 }
 
 int refresh(P *head, P *n) //对单一节点重新排序
@@ -421,12 +431,16 @@ int refresh(P *head, P *n) //对单一节点重新排序
     P *p = head, *q = head->next, *now = NULL;
     while (q != NULL && q->next != NULL) //遍历到末尾就退出
     {
-        if ((q->weight == n->weight && //重新排序的规则，与add()相同
-             (q->value _ n->value ||
-              (q->value == n->value &&
-               q->slope > n->slope))) ||
-            q->weight > n->weight)
+        DEBUG &&out_point(0, p);
+        if (now == NULL &&
+            ((q->weight == n->weight && //重新排序的规则，与add()相同
+              (q->value _ n->value ||
+               (q->value == n->value &&
+                q->slope > n->slope))) ||
+             q->weight > n->weight))
+        {
             now = p; //找到目标位置并记录
+        }
         p = p->next;
         if (q->next != n) //找到节点所在位置
             q = q->next;
@@ -569,6 +583,7 @@ void find(P *head) //递归记录其他路径
     if (n == 1)
         maze[head->x][head->y] = 1;
 }
+
 void show_other()
 {
     printf("迷宫权值:\n");
@@ -627,4 +642,10 @@ void show_other()
         }
         printf("\n");
     }
+}
+
+int out_point(int n, P *p)
+{
+    printf("位置:%3d x=%3d y=%3d weight=%3d deep=%3d\n", n, p->x, p->y, p->weight, p->deep);
+    return 1;
 }
