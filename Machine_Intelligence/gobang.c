@@ -10,7 +10,8 @@ ai部分代码借鉴自：https://github.com/lihongxun945/gobang
 #include <stdlib.h>
 #include <string.h>
 
-#define DEBUG 0
+#define DEBUG 1
+#define SHOW_CHESSBOARD 0
 #define CS chessboard
 #define MAX FIVE * 10
 #define MIN -FIVE * 10
@@ -42,6 +43,7 @@ enum score
 
 char chessboard[15][15] = {0};
 int hum_score[15][15] = {0}, com_score[15][15] = {0};
+int ab_cut_num;
 
 int show_chessboard(int flg);                         //显示棋局
 void put(Loc *l, char name);                          //落子
@@ -323,7 +325,9 @@ Loc *AI()
     for (int i = 2; i <= DEEP; i += 2)
     {
         score = ab_max(i, &l, MIN, MAX);
+        DEBUG &&printf("剪枝数:%d", ab_cut_num);
         DEBUG &&printf("深度:%2d---score-->%10d\n", i, score);
+        ab_cut_num = 0;
         if (score >= FIVE)
             break;
     }
@@ -789,14 +793,14 @@ int ab_max(int deep, Loc *l, int alpha, int beta)
     Loc ll;
     if (deep <= 0 || value >= FIVE || value <= -FIVE)
     {
-        DEBUG &&show_chessboard(1);
+        DEBUG &&SHOW_CHESSBOARD &&show_chessboard(1);
         return value;
     }
     points = generate('c');
     if (points->next == NULL)
     {
         DEBUG &&printf("无子可落---deep--->%2d\n", deep);
-        DEBUG &&show_chessboard(1);
+        DEBUG &&SHOW_CHESSBOARD &&show_chessboard(1);
         free(points);
         return value;
     }
@@ -824,14 +828,14 @@ int ab_cut(int deep, int alpha, int beta, char name)
     DEBUG &&printf("当前深度:%2d\n", deep);
     if (deep <= 0 || value >= FIVE || value <= -FIVE)
     {
-        DEBUG &&show_chessboard(1);
+        DEBUG &&SHOW_CHESSBOARD &&show_chessboard(1);
         return value;
     }
     points = generate(name);
     if (points->next == NULL)
     {
         DEBUG &&printf("无子可落---deep--->%2d\n", deep);
-        DEBUG &&show_chessboard(1);
+        DEBUG &&SHOW_CHESSBOARD &&show_chessboard(1);
         free(points);
         return value;
     }
@@ -845,6 +849,7 @@ int ab_cut(int deep, int alpha, int beta, char name)
             alpha = score;
         if (score > beta)
         {
+            ab_cut_num++;
             P *p = points;
             for (p = points->next; p != NULL; p = p->next)
                 free(points), points = p;
