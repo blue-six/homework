@@ -35,8 +35,8 @@ int startI = 1,
     startJ = 1; // 入口
 int count;
 int success = 0;
-//迷宫数组
-int maze[MAX_SIZE][MAX_SIZE];
+
+int maze[MAX_SIZE][MAX_SIZE];                         //迷宫数组
 unsigned short maze_weight[MAX_SIZE][MAX_SIZE] = {0}; //迷宫权值
 unsigned short maze_value[MAX_SIZE][MAX_SIZE] = {0};  //迷宫估值
 unsigned short maze_deep[MAX_SIZE][MAX_SIZE] = {0};   //迷宫深度
@@ -460,6 +460,7 @@ int visit_A_star(int row2, int col2) //通过A*算法寻找迷宫出路
 void add(P *head, P *n) //向open_list中加如节点
 {
     P *p = head, *q = p;
+    char flg = 1;           //加入失败标志
     if (head->next == NULL) //头节点之后为空的相关判断
     {
         head->next = n; //之后为空则直接链接返回
@@ -467,7 +468,6 @@ void add(P *head, P *n) //向open_list中加如节点
     }
     else
         q = q->next;  //否则当前指针向后移动
-    char flg = 1;     //加入失败标志
     while (q != NULL) //遍历到末尾就退出
     {
         if (q->weight < n->weight ||   //排序的判断条件，权值小的放在前方
