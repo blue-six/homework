@@ -4,7 +4,7 @@
 #include <string.h>
 #include <time.h>
 
-#define DEBUG 1
+#define DEBUG 0
 
 #define __ <
 #define _ >
@@ -343,7 +343,7 @@ int visit_A_star(int row2, int col2) //通过A*算法寻找迷宫出路
         // refresh_deep(p, row, col, map);
         if (p->weight > weight) //(p->value + get_good_deep(x, y))
         {
-            printf("退出: x=%3d y=%3d weight=%3d", p->x, p->y, p->weight);
+            DEBUG &&printf("退出: x=%3d y=%3d weight=%3d", p->x, p->y, p->weight);
             break;
         }
         p->closed = 1;                                      //将此节点标记为关闭
