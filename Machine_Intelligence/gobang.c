@@ -10,12 +10,12 @@ ai部分代码借鉴自：https://github.com/lihongxun945/gobang
 #include <stdlib.h>
 #include <string.h>
 
-#define DEBUG 1
+#define DEBUG 0
 #define SHOW_CHESSBOARD 0
 #define CS chessboard
 #define MAX FIVE * 10
 #define MIN -FIVE * 10
-#define DEEP 6
+#define DEEP 4
 typedef struct location
 {
     unsigned int x : 8, y : 8;
