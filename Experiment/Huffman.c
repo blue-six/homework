@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct tree //哈夫曼树节点
 {
@@ -21,13 +22,14 @@ void out(T *head, int len);           //打印输出
 void _out(T *head, stack *p);
 void freeNodes(T *root);
 void _in(int **p, char ***c, int *len);
+void out_tree(T *head, int deep, int flg[]);
 
 int main()
 {
     // char sign[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
     // int prob[] = {5, 9, 7, 8, 14, 6, 3, 11};
-    int **prob = (int **)malloc(sizeof(int **)), *len = (int *)malloc(sizeof(int *));
-    char ***sign = (char ***)malloc(sizeof(char ***));
+    int **prob = (int **)malloc(sizeof(int *)), *len = (int *)malloc(sizeof(int));
+    char ***sign = (char ***)malloc(sizeof(char **));
     _in(prob, sign, len);
     if (*len == 0)
     {
@@ -37,6 +39,9 @@ int main()
     sort(*prob, *sign, *len);
     T *head = make(*prob, *sign, *len);
     out(head, 8);
+    int flg[*len + 1];
+    memset(flg, 0, (*len + 1) * sizeof(int));
+    out_tree(head, 0, flg);
     freeNodes(head);
     free(*prob);
     free(prob);
@@ -115,6 +120,7 @@ void out(T *head, int len)
     stack a = {(char *)malloc(sizeof(char) * len), -1};
     _out(head, &a);
     free(a.data);
+    printf("\n\n");
 }
 
 void _out(T *head, stack *p)
@@ -150,14 +156,72 @@ void _in(int **p, char ***c, int *len)
     if (*len == 0)
         return;
     *p = (int *)malloc((*len) * sizeof(int));
-    *c = (char **)malloc((*len) * sizeof(char));
+    *c = (char **)malloc((*len) * sizeof(char *));
     printf("请输入字符集以及出现频率\n格式：字符 频率(int)\n");
     for (int i = 0; i < *len; i++)
     {
-        char *s = (char *)malloc(10 * sizeof(char));
+        char *s = (char *)malloc(sizeof(char[50]));
         int n;
-        scanf("%s %d", s, &n);
+        scanf("\n");
+        scanf("%s\n", s);
+        scanf("%d", &n);
         (*p)[i] = n;
         (*c)[i] = s;
     }
+}
+
+void out_tree(T *head, int deep, int flg[])
+{
+    if (head->sign != 0)
+    {
+        if (deep == 0)
+        {
+            printf("%d\n", head->percent);
+        }
+        else
+        {
+            for (int i = 0; i < deep - 1; i++)
+            {
+                if (flg[i])
+                    printf("   ");
+                else
+                    printf("|  ");
+            }
+            if (flg[deep - 1])
+                printf("└──%d->%s\n", head->percent, head->sign);
+            else
+                printf("├──%d->%s\n", head->percent, head->sign);
+        }
+        return;
+    }
+    if (deep == 0)
+    {
+        printf("%d\n", head->percent);
+    }
+    else
+    {
+        for (int i = 0; i < deep - 1; i++)
+        {
+            if (flg[i])
+                printf("   ");
+            else
+                printf("|  ");
+        }
+        if (flg[deep - 1])
+            printf("└──%d\n", head->percent);
+        else
+            printf("├──%d\n", head->percent);
+    }
+    // for (int i = 0; i < deep + 1; i++)
+    // {
+    //     if (flg[i])
+    //         printf("   ");
+    //     else
+    //         printf("|  ");
+    // }
+    // printf("\n");
+    out_tree(head->left, deep + 1, flg);
+    flg[deep] = 1;
+    out_tree(head->right, deep + 1, flg);
+    flg[deep] = 0;
 }

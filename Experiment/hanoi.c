@@ -27,6 +27,8 @@ int main()
     int n;
     printf("请输入汉诺塔层数：\n");
     scanf("%d", &n);
+    if (n == 0)
+        printf("层数为零!");
     start(n);
     return 0;
 }

@@ -9,6 +9,7 @@
 #define DEBUG 1
 #define RANGE 1000
 #define BOTTOM -500
+#define OUT 0
 
 typedef struct count
 {
@@ -16,7 +17,7 @@ typedef struct count
     char name[18];
 } C;
 
-void out(int *array, int len);                          //输出数组
+int out(int *array, int len);                           //输出数组
 int input();                                            //获取输入
 int *copy(int *array, const int len);                   //数组拷贝
 int count(int *array, const int len);                   //排序相关数据统计
@@ -72,7 +73,7 @@ int *copy(int *array, const int len)
     return p;
 }
 
-void out(int *array, int len)
+int out(int *array, int len)
 {
     printf("排序好的数组为:");
     for (int i = 0; i < len; i++)
@@ -80,6 +81,7 @@ void out(int *array, int len)
         printf(" %3d", array[i]);
     }
     printf("\n");
+    return 1;
 }
 
 int count(int *array, const int len)
@@ -92,9 +94,9 @@ int count(int *array, const int len)
     {
         q = copy(array, len);
         p = sort[i](q, len);
-        out(q, len);
+        OUT &&out(q, len);
         free(q);
-        printf("%20s() --> 比较次数:%5d   ,  移动次数:%5d\n", p->name, p->num_compare, p->num_move);
+        printf("%20s() --> 比较次数:%8d   ,  移动次数:%8d\n", p->name, p->num_compare, p->num_move);
         free(p);
     }
     return 1;

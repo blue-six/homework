@@ -57,7 +57,16 @@ void add()
 
 void out()
 {
-    for (int i = 0; i < result.last; i++)
+    if (result.data[0])
+    {
+        if (result.last > 0)
+        {
+            printf("%d + ", result.data[0]);
+        }
+        else
+            printf("%d", result.data[0]);
+    }
+    for (int i = 1; i < result.last; i++)
     {
         if (result.data[i])
         {
@@ -78,7 +87,7 @@ void in_make(char name)
 {
     list *p = _list[name - 'a'];
     int n, x;
-    printf("请输入多项式，幂次输入-1结束\n格式：系数 幂次\n");
+    printf("请输入多项式%c，幂次输入-1结束\n格式：系数 幂次\n", name);
     scanf("%d %d", &x, &n);
     while (n != -1)
     {
